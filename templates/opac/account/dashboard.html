@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block title %}我的帳戶{% endblock %}
+{% block content %}
+<h1>我的帳戶</h1>
+{% if not patron %}
+  <section class="panel">
+    <p>尚未建立讀者檔。</p>
+  </section>
+{% else %}
+  <section class="panel">
+    <h2>讀者資料</h2>
+    <table>
+      <tr><th>姓名</th><td>{{ request.user.get_full_name|default:request.user.username }}</td></tr>
+      <tr><th>Email</th><td>{{ request.user.email|default:"-" }}</td></tr>
+      <tr><th>讀者條碼</th><td>{{ patron.barcode }}</td></tr>
+      <tr><th>讀者類型</th><td>{{ patron.patron_type }}</td></tr>
+      <tr><th>所屬館</th><td>{{ patron.home_branch.name|default:"-" }}</td></tr>
+    </table>
+  </section>
+  <div class="grid">
+    <section class="panel">
+      <h2>目前借閱</h2>
+      <p>{{ open_loans.count }} 筆</p>
+      <a class="button secondary" href="{% url 'discovery:account_loans' %}">查看借閱</a>
+    </section>
+    <section class="panel">
+      <h2>預約</h2>
+      <p>{{ active_holds.count }} 筆</p>
+      <a class="button secondary" href="{% url 'discovery:account_holds' %}">查看預約</a>
+    </section>
+    <section class="panel">
+      <h2>費用</h2>
+      <p>{{ open_fees.count }} 筆</p>
+      <a class="button secondary" href="{% url 'discovery:account_fees' %}">查看費用</a>
+    </section>
+    <section class="panel">
+      <h2>通知</h2>
+      <p>{{ unread_notifications.count }} 筆</p>
+      <a class="button secondary" href="{% url 'discovery:account_notifications' %}">查看通知</a>
+    </section>
+  </div>
+{% endif %}
+{% endblock %}

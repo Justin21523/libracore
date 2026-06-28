@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block title %}{{ object.title }}{% endblock %}
+{% block content %}
+<h1>{{ object.title }}</h1>
+<section class="panel">
+  <h2>Dublin Core</h2>
+  <table>
+    <tbody>
+      {% for key, value in object.dc_metadata.items %}
+        <tr><th>{{ key }}</th><td>{{ value }}</td></tr>
+      {% empty %}
+        <tr><td>尚無 Dublin Core metadata。</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% if object.rights_statement %}<p><strong>Rights</strong> {{ object.rights_statement }}</p>{% endif %}
+</section>
+<section class="panel">
+  <h2>檔案</h2>
+  <table>
+    <thead><tr><th>Label</th><th>MIME</th><th>Size</th><th></th></tr></thead>
+    <tbody>
+      {% for asset in public_files %}
+        <tr>
+          <td>{{ asset.label|default:asset.file.name }}</td>
+          <td>{{ asset.mime_type }}</td>
+          <td>{{ asset.size_bytes }}</td>
+          <td><a href="{% url 'repository:file_download' asset.id %}">下載</a></td>
+        </tr>
+      {% empty %}
+        <tr><td colspan="4">沒有公開檔案。</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</section>
+{% endblock %}

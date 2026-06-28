@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block title %}基金{% endblock %}
+{% block content %}
+<h1>基金</h1>
+<table>
+  <thead><tr><th>代碼</th><th>名稱</th><th>年度</th><th>分配金額</th><th>交易數</th></tr></thead>
+  <tbody>
+  {% for fund in funds %}
+    <tr><td>{{ fund.code }}</td><td>{{ fund.name }}</td><td>{{ fund.fiscal_year }}</td><td>{{ fund.allocated_amount }}</td><td>{{ fund.transactions.count }}</td></tr>
+  {% empty %}<tr><td colspan="5">尚無基金。</td></tr>{% endfor %}
+  </tbody>
+</table>
+{% endblock %}
+

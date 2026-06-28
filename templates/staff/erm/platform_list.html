@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block title %}ERM Platforms{% endblock %}
+{% block content %}
+<h1>ERM Platforms</h1>
+<table>
+  <thead><tr><th>Code</th><th>Name</th><th>Vendor</th><th>Base URL</th><th>Resources</th><th>Packages</th></tr></thead>
+  <tbody>
+    {% for platform in platforms %}
+      <tr>
+        <td>{{ platform.code }}</td>
+        <td>{{ platform.name }}</td>
+        <td>{{ platform.vendor.name|default:"-" }}</td>
+        <td>{% if platform.base_url %}<a href="{{ platform.base_url }}">{{ platform.base_url }}</a>{% else %}-{% endif %}</td>
+        <td>{{ platform.resources.count }}</td>
+        <td>{{ platform.packages.count }}</td>
+      </tr>
+    {% empty %}
+      <tr><td colspan="6">尚無平台。</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

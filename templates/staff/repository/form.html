@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block title %}{% if object %}編輯數位物件{% else %}新增數位物件{% endif %}{% endblock %}
+{% block content %}
+<h1>{% if object %}編輯數位物件{% else %}新增數位物件{% endif %}</h1>
+<form class="panel" method="post">
+  {% csrf_token %}
+  {% include "staff/repository/object_fields.html" %}
+  <button type="submit">儲存</button>
+</form>
+{% endblock %}

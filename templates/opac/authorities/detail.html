@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block title %}{{ authority }}{% endblock %}
+{% block content %}
+<h1>{{ authority }}</h1>
+<p>{{ authority.authority_type }} <span class="status {{ authority.status }}">{{ authority.status }}</span></p>
+{% if authority.deprecated_replacement %}
+  <p>此權威已停用，請改用 <a href="{% url 'authorities:detail' authority.deprecated_replacement.id %}">{{ authority.deprecated_replacement }}</a>。</p>
+{% endif %}
+<div class="grid">
+  <section class="panel">
+    <h2>標目</h2>
+    <h3>正式標目與異名</h3>
+    <ul>
+      {% for access_point in authority.access_points.all %}
+        <li>{{ access_point.label }} <span class="status">{{ access_point.kind }}</span></li>
+      {% endfor %}
+    </ul>
+  </section>
+  <section class="panel">
+    <h2>外部連結</h2>
+    <ul>
+      {% for identifier in authority.external_identifiers.all %}
+        <li>{{ identifier.scheme }} {% if identifier.uri %}<a href="{{ identifier.uri }}">{{ identifier.value }}</a>{% else %}{{ identifier.value }}{% endif %}</li>
+      {% empty %}<li>-</li>{% endfor %}
+    </ul>
+  </section>
+</div>
+<div class="grid">
+  <section class="panel">
+    <h2>相關權威</h2>
+    <ul>
+      {% for relation in authority.outgoing_relations.all %}
+        <li>{{ relation.relation_type }} → <a href="{% url 'authorities:detail' relation.target.id %}">{{ relation.target }}</a></li>
+      {% empty %}<li>-</li>{% endfor %}
+    </ul>
+  </section>
+  <section class="panel">
+    <h2>相關書目</h2>
+    <ul>
+      {% for record in linked_records %}
+        <li>{% if record.instance %}<a href="{% url 'discovery:record_detail' record.instance.id %}">{{ record.instance.title_statement }}</a>{% else %}{{ record.control_number }}{% endif %}</li>
+      {% empty %}<li>-</li>{% endfor %}
+    </ul>
+  </section>
+</div>
+{% endblock %}
+

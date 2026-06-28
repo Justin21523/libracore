@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% block title %}搜尋結果{% endblock %}
+{% block content %}
+<section class="panel" data-tour-id="opac-search-controls">
+<div class="panel-header">
+  <div>
+    <p class="eyebrow">Discovery</p>
+    <h1>搜尋結果</h1>
+    <p>使用 facets 篩選館藏、電子資源、數位典藏與可用狀態。</p>
+  </div>
+</div>
+<form
+  method="get"
+  action="{% url 'discovery:search' %}"
+  hx-get="{% url 'discovery:search' %}"
+  hx-target="#search-results"
+  hx-push-url="true"
+>
+  <label for="q">關鍵字</label>
+  <input id="q" name="q" value="{{ result_page.query }}">
+  <div class="grid">
+    <div>
+      <label>資料類型</label>
+      <input name="resource_type" value="{{ result_page.filters.resource_type }}">
+    </div>
+    <div>
+      <label>可用狀態</label>
+      <input name="availability" value="{{ result_page.filters.availability }}">
+    </div>
+    <div>
+      <label>館別</label>
+      <input name="branch" value="{{ result_page.filters.branch }}">
+    </div>
+    <div>
+      <label>年份</label>
+      <input name="year" value="{{ result_page.filters.year }}">
+    </div>
+    <div>
+      <label>線上可用</label>
+      <input name="online_available" value="{{ result_page.filters.online_available }}">
+    </div>
+    <div>
+      <label>平台</label>
+      <input name="platform" value="{{ result_page.filters.platform }}">
+    </div>
+    <div>
+      <label>數位典藏</label>
+      <input name="repository_available" value="{{ result_page.filters.repository_available }}">
+    </div>
+    <div>
+      <label>檔案 MIME</label>
+      <input name="file_mime_type" value="{{ result_page.filters.file_mime_type }}">
+    </div>
+  </div>
+  <div class="toolbar">
+    <button type="submit">更新搜尋</button>
+    <a class="button secondary" href="{% url 'discovery:home' %}">重新搜尋</a>
+  </div>
+</form>
+</section>
+<div id="search-results" data-tour-id="opac-search-results">
+  {% include "opac/partials/search_results.html" %}
+</div>
+{% endblock %}

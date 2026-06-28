@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block title %}我的通知{% endblock %}
+{% block content %}
+<h1>我的通知</h1>
+<table>
+  <thead><tr><th>類型</th><th>主旨</th><th>內容</th><th>狀態</th><th>操作</th></tr></thead>
+  <tbody>
+    {% for notification in notifications %}
+      <tr>
+        <td>{{ notification.notification_type }}</td>
+        <td>{{ notification.subject }}</td>
+        <td>{{ notification.body }}</td>
+        <td><span class="status {{ notification.status }}">{{ notification.status }}</span></td>
+        <td>
+          {% if notification.status != "read" %}
+            <form method="post" action="{% url 'discovery:account_notification_mark_read' notification.id %}">
+              {% csrf_token %}<button class="secondary" type="submit">標為已讀</button>
+            </form>
+          {% else %}-{% endif %}
+        </td>
+      </tr>
+    {% empty %}
+      <tr><td colspan="5">沒有通知。</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

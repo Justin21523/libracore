@@ -1,0 +1,196 @@
+{% extends "base.html" %}
+{% block title %}MARC 審核 #{{ record.sequence }}{% endblock %}
+{% block shell_title %}MARC 審核{% endblock %}
+{% block content %}
+<section class="panel" data-tour-id="marc-review-header">
+  <div class="panel-header">
+    <div>
+      <p class="eyebrow">Record review</p>
+      <h1>MARC 審核 #{{ record.sequence }}</h1>
+      <p>
+        批次 <a href="{% url 'staff:import_batch_detail' record.batch.id %}">{{ record.batch.filename|default:record.batch.id }}</a>
+        · Control number {{ record.control_number|default:"-" }}
+      </p>
+    </div>
+    <div class="toolbar tight">
+      <span class="status {{ record.status }}">{{ record.status }}</span>
+      <span class="status">{{ record.format_type }}</span>
+    </div>
+  </div>
+  {% if record.conflict_reason %}
+    <p><strong>衝突：</strong>{{ record.conflict_reason }}</p>
+  {% endif %}
+  {% if record.validation_errors %}
+    <pre>{{ record.validation_errors }}</pre>
+  {% endif %}
+</section>
+
+<div class="grid two">
+  <section class="panel" data-tour-id="marc-review-mapping">
+    <div class="panel-header">
+      <h2>Mapped Preview</h2>
+    </div>
+    <form method="post" action="{% url 'staff:import_record_approve' record.id %}" hx-post="{% url 'staff:import_record_approve' record.id %}" hx-target="body">
+      {% csrf_token %}
+      {% if record.format_type == "authority" %}
+        <label>Authority heading</label>
+        <input name="authority_preferred_label" value="{{ record.mapped_json.authority.preferred_label }}">
+        <p>類型：{{ record.mapped_json.authority.authority_type }}</p>
+      {% elif record.format_type == "holdings" %}
+        <div class="grid two">
+          <div>
+            <label>Branch code</label>
+            <input name="holding_branch_code" value="{{ record.mapped_json.holding.branch_code }}">
+          </div>
+          <div>
+            <label>Location code</label>
+            <input name="holding_location_code" value="{{ record.mapped_json.holding.location_code }}">
+          </div>
+        </div>
+        <label>Call number</label>
+        <input name="holding_call_number" value="{{ record.mapped_json.holding.call_number }}">
+        <p>書目控制號：{{ record.mapped_json.bibliographic_control_number }}</p>
+        <p>館藏文字：{{ record.mapped_json.holding.textual_holdings }}</p>
+      {% else %}
+        <label>Work title</label>
+        <input name="work_primary_title" value="{{ record.mapped_json.work.primary_title }}">
+        <label>Instance title</label>
+        <input name="instance_title_statement" value="{{ record.mapped_json.instance.title_statement }}">
+        <div class="grid two">
+          <div>
+            <label>Publisher</label>
+            <input name="publisher" value="{{ record.mapped_json.instance.publisher }}">
+          </div>
+          <div>
+            <label>Publication date</label>
+            <input name="publication_date" value="{{ record.mapped_json.instance.publication_date }}">
+          </div>
+        </div>
+      {% endif %}
+      <div class="toolbar">
+        <button type="submit">核准入庫</button>
+      </div>
+    </form>
+    <form method="post" action="{% url 'staff:import_record_reject' record.id %}">
+      {% csrf_token %}
+      <label>拒收備註</label>
+      <input name="note">
+      <div class="toolbar">
+        <button class="danger" type="submit">拒收</button>
+      </div>
+    </form>
+  </section>
+
+  <section class="panel" data-tour-id="marc-review-resolution">
+    <div class="panel-header">
+      <h2>衝突解析</h2>
+    </div>
+    <form method="post" action="{% url 'staff:import_record_resolve' record.id %}">
+      {% csrf_token %}
+      <label for="action">解析動作</label>
+      <select id="action" name="action">
+        <option value="create_new">建立新紀錄</option>
+        <option value="link_existing">連結既有紀錄</option>
+        <option value="overlay_existing">覆寫既有 metadata</option>
+      </select>
+      <label for="target_id">候選目標</label>
+      <select id="target_id" name="target_id">
+        <option value="">不指定</option>
+        {% for candidate in match_candidates %}
+          <option value="{{ candidate.target_id }}">
+            {{ candidate.target_type }} · {{ candidate.match_rule }} · {{ candidate.confidence }}%
+          </option>
+        {% endfor %}
+      </select>
+      {% if record.format_type == "authority" %}
+        <label>Authority heading override</label>
+        <input name="authority_preferred_label" value="{{ record.mapped_json.authority.preferred_label }}">
+      {% elif record.format_type == "holdings" %}
+        <label>Branch code override</label>
+        <input name="holding_branch_code" value="{{ record.mapped_json.holding.branch_code }}">
+        <label>Location code override</label>
+        <input name="holding_location_code" value="{{ record.mapped_json.holding.location_code }}">
+        <label>Call number override</label>
+        <input name="holding_call_number" value="{{ record.mapped_json.holding.call_number }}">
+      {% else %}
+        <label>Instance title override</label>
+        <input name="instance_title_statement" value="{{ record.mapped_json.instance.title_statement }}">
+      {% endif %}
+      <div class="toolbar">
+        <button type="submit">執行解析</button>
+      </div>
+    </form>
+  </section>
+</div>
+
+<section class="panel" data-tour-id="marc-review-candidates">
+  <div class="panel-header"><h2>Match Candidates</h2></div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>目標</th><th>規則</th><th>信心</th><th>理由</th></tr></thead>
+      <tbody>
+      {% for candidate in match_candidates %}
+        <tr>
+          <td>{{ candidate.target_type }}<br><code>{{ candidate.target_id }}</code></td>
+          <td>{{ candidate.match_rule }}</td>
+          <td>{{ candidate.confidence }}%</td>
+          <td>{{ candidate.reason }}</td>
+        </tr>
+      {% empty %}
+        <tr><td colspan="4">沒有候選目標。</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section class="panel" data-tour-id="marc-review-authority-suggestions">
+  <div class="panel-header"><h2>權威候選</h2></div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>欄位</th><th>標目</th><th>類型</th><th>狀態</th><th>操作</th></tr></thead>
+      <tbody>
+      {% for suggestion in suggestions %}
+        <tr>
+          <td>{{ suggestion.marc_tag }}</td>
+          <td>{{ suggestion.label }}</td>
+          <td>{{ suggestion.authority_type }}</td>
+          <td><span class="status {{ suggestion.status }}">{{ suggestion.status }}</span></td>
+          <td>
+            {% if suggestion.matched_authority %}<p>match: {{ suggestion.matched_authority }}</p>{% endif %}
+            <div class="toolbar tight">
+              {% if suggestion.matched_authority %}
+                <form method="post" action="{% url 'staff:authority_suggestion_accept' suggestion.id %}">
+                  {% csrf_token %}
+                  <input type="hidden" name="authority_id" value="{{ suggestion.matched_authority.id }}">
+                  <button type="submit">接受 match</button>
+                </form>
+              {% endif %}
+              <form method="post" action="{% url 'staff:authority_suggestion_create_provisional' suggestion.id %}">
+                {% csrf_token %}<button type="submit">建立 provisional</button>
+              </form>
+              <form method="post" action="{% url 'staff:authority_suggestion_reject' suggestion.id %}">
+                {% csrf_token %}<button class="secondary" type="submit">拒絕</button>
+              </form>
+            </div>
+          </td>
+        </tr>
+      {% empty %}
+        <tr><td colspan="5">沒有權威候選。</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<div class="grid two">
+  <section class="panel" data-tour-id="marc-review-parsed">
+    <h2>Parsed MARC</h2>
+    <pre>{{ record.parsed_json }}</pre>
+  </section>
+  <section class="panel" data-tour-id="marc-review-raw">
+    <h2>Raw MARC</h2>
+    <pre>{{ record.raw_payload }}</pre>
+  </section>
+</div>
+{% endblock %}

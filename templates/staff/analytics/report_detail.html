@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block title %}{{ report.name }}{% endblock %}
+{% block content %}
+<h1>{{ report.name }}</h1>
+<p><span class="status">{{ report.code }}</span></p>
+<p>{{ report.description }}</p>
+
+<section class="panel">
+  <h2>執行報表</h2>
+  <form method="post" action="{% url 'staff:analytics_report_run' report.code %}">
+    {% csrf_token %}
+    <div class="grid">
+      <div>
+        <label for="date_from">起始日期</label>
+        <input id="date_from" name="date_from" type="date">
+      </div>
+      <div>
+        <label for="date_to">結束日期</label>
+        <input id="date_to" name="date_to" type="date">
+      </div>
+      <div>
+        <label for="days">天數</label>
+        <input id="days" name="days" type="number" min="1" max="730" placeholder="30">
+      </div>
+      <div>
+        <label for="limit">筆數上限</label>
+        <input id="limit" name="limit" type="number" min="1" max="500" placeholder="100">
+      </div>
+    </div>
+    <div class="toolbar">
+      <button type="submit">執行</button>
+      <a class="button secondary" href="{% url 'staff:analytics_dashboard' %}">返回報表平台</a>
+    </div>
+  </form>
+</section>
+
+<section class="panel" style="margin-top: 16px;">
+  <h2>最近執行</h2>
+  <table>
+    <thead>
+      <tr><th>時間</th><th>狀態</th><th>參數</th><th>筆數</th><th>執行者</th><th></th></tr>
+    </thead>
+    <tbody>
+      {% for run in recent_runs %}
+        <tr>
+          <td>{{ run.created_at }}</td>
+          <td><span class="status {{ run.status }}">{{ run.status }}</span></td>
+          <td><code>{{ run.parameters }}</code></td>
+          <td>{{ run.record_count }}</td>
+          <td>{{ run.requested_by|default:"-" }}</td>
+          <td><a class="button secondary" href="{% url 'staff:analytics_run_detail' run.id %}">檢視</a></td>
+        </tr>
+      {% empty %}
+        <tr><td colspan="6">尚無執行紀錄。</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</section>
+{% endblock %}

@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% block title %}權威工作台{% endblock %}
+{% block shell_title %}權威控制{% endblock %}
+{% block content %}
+<section class="panel" data-tour-id="authority-search">
+  <div class="panel-header">
+    <div>
+      <p class="eyebrow">Authority control</p>
+      <h1>權威工作台</h1>
+      <p>管理人名、團體、會議、統一題名、主題、地名與異名標目。</p>
+    </div>
+    <a class="button button-primary" href="{% url 'staff:authority_new' %}">新增權威</a>
+  </div>
+  <form method="get">
+    <label>搜尋標目</label>
+    <input name="q" value="{{ request.GET.q }}" placeholder="輸入 authorized 或 variant heading">
+    <div class="grid two">
+      <div>
+        <label>類型</label>
+        <select name="authority_type">
+          <option value="">全部</option>
+          {% for value, label in types %}<option value="{{ value }}" {% if request.GET.authority_type == value %}selected{% endif %}>{{ label }}</option>{% endfor %}
+        </select>
+      </div>
+      <div>
+        <label>狀態</label>
+        <select name="status">
+          <option value="">全部</option>
+          {% for value, label in statuses %}<option value="{{ value }}" {% if request.GET.status == value %}selected{% endif %}>{{ label }}</option>{% endfor %}
+        </select>
+      </div>
+    </div>
+    <div class="toolbar"><button type="submit">查詢</button></div>
+  </form>
+</section>
+
+<section class="panel" data-tour-id="authority-results">
+  <div class="panel-header"><h2>權威紀錄</h2></div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>標目</th><th>類型</th><th>狀態</th><th>來源</th><th>URI</th></tr></thead>
+      <tbody>
+      {% for authority in authorities %}
+        <tr>
+          <td><a href="{% url 'staff:authority_detail' authority.id %}">{{ authority }}</a></td>
+          <td>{{ authority.authority_type }}</td>
+          <td><span class="status {{ authority.status }}">{{ authority.status }}</span></td>
+          <td>{{ authority.source|default:"-" }}</td>
+          <td>{% if authority.entity_uri %}<a href="{{ authority.entity_uri }}">{{ authority.entity_uri }}</a>{% else %}-{% endif %}</td>
+        </tr>
+      {% empty %}
+        <tr><td colspan="5">沒有權威紀錄。</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+{% endblock %}

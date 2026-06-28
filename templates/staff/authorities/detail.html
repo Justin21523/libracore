@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+{% block title %}{{ authority }}{% endblock %}
+{% block shell_title %}權威詳情{% endblock %}
+{% block content %}
+<section class="panel" data-tour-id="authority-detail-header">
+  <div class="panel-header">
+    <div>
+      <p class="eyebrow">Authority record</p>
+      <h1>{{ authority }}</h1>
+      <p>{{ authority.authority_type }} · {{ authority.source|default:"local" }} · {{ authority.control_number|default:"-" }}</p>
+    </div>
+    <span class="status {{ authority.status }}">{{ authority.status }}</span>
+  </div>
+  {% if authority.deprecated_replacement %}
+    <p>Replacement: <a href="{% url 'staff:authority_detail' authority.deprecated_replacement.id %}">{{ authority.deprecated_replacement }}</a></p>
+  {% endif %}
+</section>
+
+<div class="grid two">
+  <section class="panel" data-tour-id="authority-access-points">
+    <div class="panel-header"><h2>標目</h2></div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>類型</th><th>標目</th><th>語言/文字</th><th>Preferred</th></tr></thead>
+        <tbody>
+        {% for access_point in authority.access_points.all %}
+          <tr>
+            <td>{{ access_point.kind }}</td>
+            <td>{{ access_point.label }}</td>
+            <td>{{ access_point.language }} {{ access_point.script }}</td>
+            <td>{{ access_point.is_preferred }}</td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <form method="post" action="{% url 'staff:authority_add_access_point' authority.id %}">
+      {% csrf_token %}
+      <label>新增標目</label>
+      <input name="label" required>
+      <div class="grid two">
+        <div>
+          <label>類型</label>
+          <select name="kind">{% for value, label in access_point_kinds %}<option value="{{ value }}">{{ label }}</option>{% endfor %}</select>
+        </div>
+        <div>
+          <label><input type="checkbox" name="is_preferred" style="width:auto"> 設為 preferred</label>
+        </div>
+      </div>
+      <div class="toolbar"><button type="submit">新增標目</button></div>
+    </form>
+  </section>
+
+  <section class="panel" data-tour-id="authority-relations">
+    <div class="panel-header"><h2>關係</h2></div>
+    <ul>
+      {% for relation in authority.outgoing_relations.all %}
+        <li>{{ relation.relation_type }} -> <a href="{% url 'staff:authority_detail' relation.target.id %}">{{ relation.target }}</a></li>
+      {% empty %}<li>-</li>{% endfor %}
+    </ul>
+    <form method="post" action="{% url 'staff:authority_add_relation' authority.id %}">
+      {% csrf_token %}
+      <label>目標權威</label>
+      <select name="target_id">{% for item in all_authorities %}<option value="{{ item.id }}">{{ item }}</option>{% endfor %}</select>
+      <label>關係</label>
+      <select name="relation_type">{% for value, label in relation_types %}<option value="{{ value }}">{{ label }}</option>{% endfor %}</select>
+      <label>備註</label>
+      <input name="note">
+      <div class="toolbar"><button type="submit">新增關係</button></div>
+    </form>
+  </section>
+</div>
+
+<div class="grid two">
+  <section class="panel" data-tour-id="authority-linked-records">
+    <div class="panel-header"><h2>相關書目</h2></div>
+    <ul>
+      {% for record in linked_records %}
+        <li>{% if record.instance %}<a href="{% url 'discovery:record_detail' record.instance.id %}">{{ record.instance.title_statement }}</a>{% else %}{{ record.control_number }}{% endif %}</li>
+      {% empty %}<li>-</li>{% endfor %}
+    </ul>
+  </section>
+  <section class="panel" data-tour-id="authority-governance">
+    <div class="panel-header"><h2>合併 / Deprecated</h2></div>
+    <form method="post" action="{% url 'staff:authority_merge' authority.id %}">
+      {% csrf_token %}
+      <label>合併到</label>
+      <select name="target_id">{% for item in all_authorities %}<option value="{{ item.id }}">{{ item }}</option>{% endfor %}</select>
+      <label>備註</label>
+      <input name="note">
+      <div class="toolbar"><button class="danger" type="submit">合併</button></div>
+    </form>
+    <form method="post" action="{% url 'staff:authority_deprecate' authority.id %}">
+      {% csrf_token %}
+      <label>Replacement</label>
+      <select name="replacement_id"><option value="">無</option>{% for item in all_authorities %}<option value="{{ item.id }}">{{ item }}</option>{% endfor %}</select>
+      <label>備註</label>
+      <input name="note">
+      <div class="toolbar"><button class="secondary" type="submit">標記 deprecated</button></div>
+    </form>
+  </section>
+</div>
+{% endblock %}

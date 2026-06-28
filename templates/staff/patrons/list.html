@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block title %}讀者管理{% endblock %}
+{% block content %}
+<h1>讀者管理</h1>
+<div class="toolbar">
+  <a class="button" href="{% url 'staff:patron_new' %}">新增讀者</a>
+  <a class="button secondary" href="{% url 'staff:circulation_desk' %}">流通櫃台</a>
+</div>
+<form method="get" class="panel">
+  <label>查詢</label>
+  <input name="q" value="{{ query }}" placeholder="barcode / username / email">
+  <div class="toolbar"><button type="submit">搜尋</button></div>
+</form>
+<table>
+  <thead><tr><th>條碼</th><th>帳號</th><th>Email</th><th>類型</th><th>到期日</th><th>所屬館</th></tr></thead>
+  <tbody>
+    {% for patron in patrons %}
+      <tr>
+        <td><a href="{% url 'staff:patron_detail' patron.id %}">{{ patron.barcode }}</a></td>
+        <td>{{ patron.user.username }}</td>
+        <td>{{ patron.user.email|default:"-" }}</td>
+        <td>{{ patron.patron_type }}</td>
+        <td>{{ patron.expiry_date|date:"Y-m-d"|default:"-" }}</td>
+        <td>{{ patron.home_branch.name|default:"-" }}</td>
+      </tr>
+    {% empty %}
+      <tr><td colspan="6">沒有讀者。</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% block title %}報表平台{% endblock %}
+{% block shell_title %}報表平台{% endblock %}
+{% block content %}
+<section class="panel" data-tour-id="analytics-dashboard">
+  <div class="panel-header">
+    <div>
+      <p class="eyebrow">Analytics</p>
+      <h1>報表平台</h1>
+      <p>執行館藏、流通、採購、ERM、MARC、典藏等固定白名單報表。</p>
+    </div>
+  </div>
+  <h2>可執行報表</h2>
+  <div class="table-wrap">
+  <table>
+    <thead>
+      <tr><th>代碼</th><th>名稱</th><th>說明</th><th>權限</th><th></th></tr>
+    </thead>
+    <tbody>
+      {% for report in reports %}
+        <tr>
+          <td><span class="status">{{ report.code }}</span></td>
+          <td>{{ report.name }}</td>
+          <td>{{ report.description }}</td>
+          <td>{{ report.required_permission|default:"staff" }}</td>
+          <td><a class="button secondary" href="{% url 'staff:analytics_report_detail' report.code %}">開啟</a></td>
+        </tr>
+      {% empty %}
+        <tr><td colspan="5">目前沒有可用報表。</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  </div>
+</section>
+
+<section class="panel" data-tour-id="analytics-recent-runs">
+  <h2>最近執行</h2>
+  <div class="table-wrap">
+  <table>
+    <thead>
+      <tr><th>時間</th><th>報表</th><th>狀態</th><th>筆數</th><th>執行者</th><th></th></tr>
+    </thead>
+    <tbody>
+      {% for run in recent_runs %}
+        <tr>
+          <td>{{ run.created_at }}</td>
+          <td>{{ run.name }}<br><span class="status">{{ run.code }}</span></td>
+          <td><span class="status {{ run.status }}">{{ run.status }}</span></td>
+          <td>{{ run.record_count }}</td>
+          <td>{{ run.requested_by|default:"-" }}</td>
+          <td><a class="button secondary" href="{% url 'staff:analytics_run_detail' run.id %}">檢視</a></td>
+        </tr>
+      {% empty %}
+        <tr><td colspan="6">尚無執行紀錄。</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  </div>
+</section>
+{% endblock %}

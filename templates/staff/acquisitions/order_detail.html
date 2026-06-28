@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block title %}訂單 {{ order.order_number }}{% endblock %}
+{% block shell_title %}採購訂單{% endblock %}
+{% block content %}
+<section class="panel" data-tour-id="acquisition-order-detail">
+  <div class="panel-header">
+    <div>
+      <p class="eyebrow">Purchase order</p>
+      <h1>訂單 {{ order.order_number }}</h1>
+      <p>{{ order.vendor }}</p>
+    </div>
+    <span class="status {{ order.status }}">{{ order.status }}</span>
+  </div>
+  <div class="toolbar">
+    <form method="post" action="{% url 'staff:acquisition_order_place' order.id %}">
+      {% csrf_token %}<button type="submit">下訂</button>
+    </form>
+  </div>
+</section>
+<section class="panel" data-tour-id="acquisition-order-lines">
+  <div class="panel-header"><h2>訂單明細</h2></div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>題名</th><th>數量</th><th>已收</th><th>取消</th><th>狀態</th><th>操作</th></tr></thead>
+      <tbody>
+      {% for line in order.lines.all %}
+        <tr>
+          <td>{{ line.title }}</td><td>{{ line.quantity }}</td><td>{{ line.received_quantity }}</td><td>{{ line.cancelled_quantity }}</td><td><span class="status {{ line.receiving_status }}">{{ line.receiving_status }}</span></td>
+          <td><a class="button button-muted" href="{% url 'staff:acquisition_receive_line' line.id %}">驗收</a></td>
+        </tr>
+      {% empty %}<tr><td colspan="6">沒有訂單明細。</td></tr>{% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+{% endblock %}

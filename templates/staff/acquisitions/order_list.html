@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block title %}採購訂單{% endblock %}
+{% block shell_title %}採購{% endblock %}
+{% block content %}
+<section class="panel" data-tour-id="acquisitions-orders">
+  <div class="panel-header">
+    <div>
+      <p class="eyebrow">Acquisitions</p>
+      <h1>採購訂單</h1>
+      <p>管理採購訂單、驗收、基金與發票對帳。</p>
+    </div>
+    <div class="toolbar tight">
+      <a class="button button-muted" href="{% url 'staff:fund_list' %}">基金</a>
+      <a class="button button-muted" href="{% url 'staff:invoice_list' %}">發票</a>
+    </div>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>訂單號</th><th>供應商</th><th>狀態</th><th>日期</th></tr></thead>
+      <tbody>
+      {% for order in orders %}
+        <tr>
+          <td><a href="{% url 'staff:acquisition_order_detail' order.id %}">{{ order.order_number }}</a></td>
+          <td>{{ order.vendor }}</td><td><span class="status {{ order.status }}">{{ order.status }}</span></td><td>{{ order.ordered_at }}</td>
+        </tr>
+      {% empty %}<tr><td colspan="4">尚無訂單。</td></tr>{% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+{% endblock %}

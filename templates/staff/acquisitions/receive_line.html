@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block title %}驗收 {{ line.title }}{% endblock %}
+{% block content %}
+<h1>驗收 {{ line.title }}</h1>
+<p>訂單 {{ line.order.order_number }}，訂購 {{ line.quantity }}，已收 {{ line.received_quantity }}，取消 {{ line.cancelled_quantity }}</p>
+<form method="post" class="panel">
+  {% csrf_token %}
+  <label>驗收數量</label>
+  <input name="quantity" type="number" min="1" value="1">
+  <label>條碼，每行一個</label>
+  <textarea name="barcodes" rows="8"></textarea>
+  <div class="toolbar">
+    <button type="submit">完成驗收</button>
+    <a class="button secondary" href="{% url 'staff:acquisition_order_detail' line.order.id %}">返回</a>
+  </div>
+</form>
+{% endblock %}

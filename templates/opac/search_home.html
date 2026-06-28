@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block title %}LibraCore OPAC{% endblock %}
+{% block content %}
+<section class="hero-search" data-tour-id="opac-search-hero">
+  <p class="eyebrow">Discovery</p>
+  <h1>館藏查詢</h1>
+  <p>搜尋書名、作者、主題、ISBN/ISSN、電子資源與數位典藏全文。</p>
+  <form method="get" action="{% url 'discovery:search' %}" class="search-row">
+    <div class="search-field">
+      <label for="q">關鍵字</label>
+      <input id="q" name="q" autofocus placeholder="例如 圖書資訊學、知識組織、MARC">
+    </div>
+    <button type="submit">搜尋</button>
+  </form>
+</section>
+{% endblock %}

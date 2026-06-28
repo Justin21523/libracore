@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block title %}ERM 電子資源{% endblock %}
+{% block shell_title %}ERM{% endblock %}
+{% block content %}
+<section class="panel" data-tour-id="erm-resource-list">
+  <div class="panel-header">
+    <div>
+      <p class="eyebrow">Electronic resources</p>
+      <h1>ERM 電子資源</h1>
+      <p>管理資料庫、電子期刊、電子書、平台、授權與到期提醒。</p>
+    </div>
+    <div class="toolbar tight">
+      <a class="button button-muted" href="{% url 'staff:erm_license_list' %}">Licenses</a>
+      <a class="button button-muted" href="{% url 'staff:erm_platform_list' %}">Platforms</a>
+      <a class="button button-muted" href="{% url 'staff:erm_package_list' %}">Packages</a>
+      <a class="button button-muted" href="{% url 'staff:erm_expiry_list' %}">到期提醒</a>
+    </div>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr><th>題名</th><th>類型</th><th>狀態</th><th>平台</th><th>套裝</th><th>License</th><th>公開</th></tr>
+      </thead>
+      <tbody>
+        {% for resource in resources %}
+          <tr>
+            <td><a href="{% url 'staff:erm_resource_detail' resource.id %}">{{ resource.title }}</a></td>
+            <td>{{ resource.resource_kind }}</td>
+            <td><span class="status {{ resource.status }}">{{ resource.status }}</span></td>
+            <td>{{ resource.platform_ref.name|default:resource.platform|default:"-" }}</td>
+            <td>{{ resource.package.name|default:"-" }}</td>
+            <td>{{ resource.license.name|default:"-" }}</td>
+            <td>{{ resource.is_public|yesno:"是,否" }}</td>
+          </tr>
+        {% empty %}
+          <tr><td colspan="7">尚無電子資源。</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+{% endblock %}

@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block title %}報表結果{% endblock %}
+{% block content %}
+<h1>{{ run.name }}</h1>
+<p>
+  <span class="status">{{ run.code }}</span>
+  <span class="status {{ run.status }}">{{ run.status }}</span>
+  {{ run.record_count }} 筆
+</p>
+
+<div class="toolbar">
+  <a class="button secondary" href="{% url 'staff:analytics_report_detail' run.code %}">回報表</a>
+  {% if run.csv_file and run.status == "completed" %}
+    <a class="button" href="{% url 'staff:analytics_run_download' run.id %}">下載 CSV</a>
+  {% endif %}
+</div>
+
+<section class="panel">
+  <h2>執行資訊</h2>
+  <p>執行者：{{ run.requested_by|default:"-" }}</p>
+  <p>開始：{{ run.started_at }}　完成：{{ run.completed_at|default:"-" }}</p>
+  <p>參數：<code>{{ run.parameters }}</code></p>
+  {% if run.error_report %}<pre>{{ run.error_report }}</pre>{% endif %}
+</section>
+
+<section class="panel" style="margin-top: 16px;">
+  <h2>結果摘要</h2>
+  <pre>{{ run.result_json.summary }}</pre>
+</section>
+
+<section class="panel" style="margin-top: 16px;">
+  <h2>結果資料</h2>
+  <table>
+    <tbody>
+      {% for row in run.result_json.rows %}
+        {% if forloop.first %}
+          <tr>
+            {% for key, value in row.items %}<th>{{ key }}</th>{% endfor %}
+          </tr>
+        {% endif %}
+        <tr>
+          {% for key, value in row.items %}<td>{{ value }}</td>{% endfor %}
+        </tr>
+      {% empty %}
+        <tr><td>沒有資料。</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</section>
+{% endblock %}

@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}新增 MARC 匯入{% endblock %}
+{% block shell_title %}新增 MARC 匯入{% endblock %}
+{% block content %}
+<section class="panel" data-tour-id="cataloging-import-upload">
+  <div class="panel-header">
+    <div>
+      <p class="eyebrow">Upload</p>
+      <h1>新增 MARC 匯入</h1>
+      <p>上傳 ISO2709、MARCXML 或 JSON MARC，系統會先建立批次，等待館員解析與審核。</p>
+    </div>
+  </div>
+  <form method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+    <div class="grid two">
+      <div>
+        <label for="source">來源</label>
+        <input id="source" name="source" placeholder="例如 DLC、OCLC、本地批次">
+      </div>
+      <div>
+        <label for="import_format">格式</label>
+        <select id="import_format" name="import_format">
+          {% for value, label in formats %}
+            <option value="{{ value }}">{{ label }}</option>
+          {% endfor %}
+        </select>
+      </div>
+    </div>
+    <label for="file">檔案</label>
+    <input id="file" type="file" name="file" required>
+    <div class="toolbar">
+      <button type="submit">建立批次</button>
+      <a class="button button-muted" href="{% url 'staff:import_batch_list' %}">返回</a>
+    </div>
+  </form>
+</section>
+{% endblock %}

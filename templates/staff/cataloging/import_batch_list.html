@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% block title %}MARC 匯入批次{% endblock %}
+{% block shell_title %}編目工作台{% endblock %}
+{% block content %}
+<section class="panel" data-tour-id="cataloging-import-list">
+  <div class="panel-header">
+    <div>
+      <p class="eyebrow">Cataloging</p>
+      <h1>MARC 匯入批次</h1>
+      <p>集中管理 ISO2709、MARCXML、JSON MARC 批次解析、審核與衝突處理。</p>
+    </div>
+    <a class="button button-primary" href="{% url 'staff:import_batch_new' %}">新增匯入批次</a>
+  </div>
+  <div class="metric-grid">
+    <div class="metric"><span>批次數</span><strong>{{ batches|length }}</strong></div>
+    <div class="metric"><span>工作重點</span><strong>MARC</strong></div>
+    <div class="metric"><span>審核模式</span><strong>Review</strong></div>
+  </div>
+</section>
+
+<section class="panel" data-tour-id="cataloging-import-table">
+  <div class="panel-header">
+    <h2>最近批次</h2>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>檔名</th>
+          <th>來源</th>
+          <th>格式</th>
+          <th>狀態</th>
+          <th>統計</th>
+          <th>建立時間</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for batch in batches %}
+          <tr>
+            <td><a href="{% url 'staff:import_batch_detail' batch.id %}">{{ batch.filename|default:batch.id }}</a></td>
+            <td>{{ batch.source|default:"-" }}</td>
+            <td><span class="status">{{ batch.import_format }}</span></td>
+            <td><span class="status {{ batch.status }}">{{ batch.status }}</span></td>
+            <td>{{ batch.record_count }} 筆，valid {{ batch.valid_count }}，invalid {{ batch.invalid_count }}，conflict {{ batch.conflict_count }}</td>
+            <td>{{ batch.created_at }}</td>
+          </tr>
+        {% empty %}
+          <tr><td colspan="6">尚無匯入批次。</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+{% endblock %}

@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block title %}{{ object.title }}{% endblock %}
+{% block content %}
+<h1>{{ object.title }}</h1>
+<div class="toolbar">
+  {% if object.status != "published" %}
+    <form method="post" action="{% url 'staff:repository_object_publish' object.id %}">{% csrf_token %}<button type="submit">發布</button></form>
+  {% endif %}
+  {% if object.status != "withdrawn" %}
+    <form method="post" action="{% url 'staff:repository_object_withdraw' object.id %}">{% csrf_token %}<button class="danger" type="submit">撤回</button></form>
+  {% endif %}
+  {% if object.status == "published" %}<a class="button secondary" href="{% url 'repository:detail' object.id %}">公開頁</a>{% endif %}
+</div>
+<section class="panel">
+  <h2>Metadata</h2>
+  <form method="post">
+    {% csrf_token %}
+    {% include "staff/repository/object_fields.html" %}
+    <button type="submit">更新</button>
+  </form>
+</section>
+<section class="panel">
+  <h2>檔案</h2>
+  <form method="post" enctype="multipart/form-data" action="{% url 'staff:repository_file_upload' object.id %}">
+    {% csrf_token %}
+    <label>Label <input name="label"></label>
+    <label>File <input type="file" name="file"></label>
+    <label>Access level
+      <select name="access_level">
+        <option value="public">public</option>
+        <option value="restricted">restricted</option>
+      </select>
+    </label>
+    <label>MIME type <input name="mime_type" placeholder="自動偵測"></label>
+    <label>OCR / full text <textarea name="ocr_text" rows="5"></textarea></label>
+    <button type="submit">上傳檔案</button>
+  </form>
+  <table>
+    <thead><tr><th>Label</th><th>Access</th><th>MIME</th><th>Size</th><th>Checksum</th><th></th></tr></thead>
+    <tbody>
+      {% for asset in object.file_assets.all %}
+        <tr>
+          <td>{{ asset.label|default:asset.file.name }}</td>
+          <td>{{ asset.access_level }}</td>
+          <td>{{ asset.mime_type }}</td>
+          <td>{{ asset.size_bytes }}</td>
+          <td>{{ asset.checksum_sha256 }}</td>
+          <td><a href="{% url 'repository:file_download' asset.id %}">下載</a></td>
+        </tr>
+      {% empty %}
+        <tr><td colspan="6">尚無檔案。</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</section>
+{% endblock %}

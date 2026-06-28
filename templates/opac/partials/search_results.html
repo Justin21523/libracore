@@ -1,0 +1,78 @@
+<div class="grid">
+  <aside class="panel" data-tour-id="opac-facets">
+    <h2>Facets</h2>
+    <h3>資料類型</h3>
+    <ul>
+      {% for value, count in result_page.facets.resource_type.items %}
+        <li>{{ value }} ({{ count }})</li>
+      {% empty %}<li>-</li>{% endfor %}
+    </ul>
+    <h3>可用狀態</h3>
+    <ul>
+      {% for value, count in result_page.facets.availability.items %}
+        <li>{{ value }} ({{ count }})</li>
+      {% empty %}<li>-</li>{% endfor %}
+    </ul>
+    <h3>館別</h3>
+    <ul>
+      {% for value, count in result_page.facets.branch.items %}
+        <li>{{ value }} ({{ count }})</li>
+      {% empty %}<li>-</li>{% endfor %}
+    </ul>
+    <h3>線上可用</h3>
+    <ul>
+      {% for value, count in result_page.facets.online_available.items %}
+        <li>{{ value }} ({{ count }})</li>
+      {% empty %}<li>-</li>{% endfor %}
+    </ul>
+    <h3>平台</h3>
+    <ul>
+      {% for value, count in result_page.facets.platform.items %}
+        <li>{{ value }} ({{ count }})</li>
+      {% empty %}<li>-</li>{% endfor %}
+    </ul>
+  </aside>
+  <section class="panel" data-tour-id="opac-result-list">
+    <p>共 {{ result_page.total }} 筆</p>
+    <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>題名</th>
+          <th>作者/貢獻者</th>
+          <th>出版</th>
+          <th>主題</th>
+          <th>狀態</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for document in result_page.page_obj.object_list %}
+          <tr>
+            <td><a href="{% url 'discovery:record_detail' document.instance_id %}">{{ document.title_main }}</a></td>
+            <td>{{ document.creator|default:"-" }}</td>
+            <td>{{ document.publisher }} {{ document.publication_date }}</td>
+            <td>{{ document.subject|truncatechars:120 }}</td>
+            <td>
+              <span class="status {{ document.availability }}">{{ document.availability }}</span>
+              {% if "true" in document.facets.online_available %}
+                <span class="status approved">online</span>
+              {% endif %}
+            </td>
+          </tr>
+        {% empty %}
+          <tr><td colspan="5">沒有符合的館藏。</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    </div>
+    <div class="toolbar">
+      {% if result_page.page_obj.has_previous %}
+        <a class="button secondary" href="?q={{ result_page.query }}&page={{ result_page.page_obj.previous_page_number }}">上一頁</a>
+      {% endif %}
+      <span>第 {{ result_page.page_obj.number }} / {{ result_page.page_obj.paginator.num_pages }} 頁</span>
+      {% if result_page.page_obj.has_next %}
+        <a class="button secondary" href="?q={{ result_page.query }}&page={{ result_page.page_obj.next_page_number }}">下一頁</a>
+      {% endif %}
+    </div>
+  </section>
+</div>

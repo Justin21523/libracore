@@ -1,0 +1,49 @@
+<h2>館藏與單冊</h2>
+<table>
+  <thead>
+    <tr>
+      <th>館別</th>
+      <th>館藏地</th>
+      <th>索書號</th>
+      <th>條碼</th>
+      <th>狀態</th>
+      <th>到期日</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for holding in instance.holdings.all %}
+      {% for item in holding.items.all %}
+        <tr>
+          <td>{{ holding.branch.name }}</td>
+          <td>{{ holding.location.name }}</td>
+          <td>{{ holding.call_number.raw|default:"-" }}</td>
+          <td>{{ item.barcode }}</td>
+          <td><span class="status {{ item.status }}">{{ item.status }}</span></td>
+          <td>{{ item.due_back_at|date:"Y-m-d"|default:"-" }}</td>
+        </tr>
+      {% empty %}
+        <tr>
+          <td>{{ holding.branch.name }}</td>
+          <td>{{ holding.location.name }}</td>
+          <td>{{ holding.call_number.raw|default:"-" }}</td>
+          <td colspan="3">無單冊資料</td>
+        </tr>
+      {% endfor %}
+    {% empty %}
+      <tr><td colspan="6">目前沒有館藏資料。</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+<p>
+  {% if request.user.is_authenticated %}
+    {% if patron_context.can_place_hold %}
+      可預約，預設取書館藏地：{{ patron_context.pickup_location.name }}
+    {% elif patron_context.patron %}
+      目前無法預約。
+    {% else %}
+      尚未建立讀者檔，無法預約。
+    {% endif %}
+  {% else %}
+    登入後可預約。
+  {% endif %}
+</p>

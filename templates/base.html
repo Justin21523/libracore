@@ -1,0 +1,100 @@
+{% load static %}
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}LibraCore{% endblock %}</title>
+  <link rel="stylesheet" href="{% static 'css/libracore.css' %}">
+  <script src="https://unpkg.com/htmx.org@1.9.12"></script>
+  <script src="{% static 'js/libracore-ui.js' %}" defer></script>
+</head>
+<body class="{% if '/staff/' in request.path %}staff-shell{% else %}public-shell{% endif %}">
+  {% if '/staff/' in request.path %}
+    <div class="app-shell">
+      <aside class="sidebar" data-tour-id="staff-sidebar">
+        <a class="brand" href="{% url 'staff:import_batch_list' %}">
+          <span class="brand-mark">LC</span>
+          <span><strong>LibraCore</strong><small>Library Platform</small></span>
+        </a>
+        <nav class="side-nav" aria-label="Staff navigation">
+          <p>編目</p>
+          <a href="{% url 'staff:import_batch_list' %}" data-nav-match="/staff/cataloging/">MARC 匯入</a>
+          <a href="{% url 'staff:authority_list' %}" data-nav-match="/staff/authorities/">權威控制</a>
+          <p>流通</p>
+          <a href="{% url 'staff:circulation_desk' %}" data-nav-match="/staff/circulation/">流通櫃台</a>
+          <a href="{% url 'staff:patron_list' %}" data-nav-match="/staff/patrons/">讀者管理</a>
+          <p>採訪與資源</p>
+          <a href="{% url 'staff:acquisition_order_list' %}" data-nav-match="/staff/acquisitions/">採購</a>
+          <a href="{% url 'staff:serial_list' %}" data-nav-match="/staff/serials/">期刊</a>
+          <a href="{% url 'staff:erm_resource_list' %}" data-nav-match="/staff/erm/">ERM</a>
+          <a href="{% url 'staff:repository_object_list' %}" data-nav-match="/staff/repository/">典藏工作台</a>
+          <p>治理</p>
+          <a href="{% url 'staff:analytics_dashboard' %}" data-nav-match="/staff/analytics/">報表</a>
+          <a href="{% url 'staff:data_quality_dashboard' %}" data-nav-match="/staff/data-quality/">資料品質</a>
+          <a href="{% url 'staff:export_job_list' %}" data-nav-match="/staff/exports/">匯出</a>
+          <a href="{% url 'staff:audit_log_list' %}" data-nav-match="/staff/audit/">稽核</a>
+        </nav>
+      </aside>
+      <div class="workspace">
+        <header class="topbar" data-tour-id="staff-topbar">
+          <button class="icon-button mobile-menu-button" type="button" data-sidebar-toggle aria-label="Toggle navigation">☰</button>
+          <div>
+            <div class="eyebrow">Staff workspace</div>
+            <div class="page-title">{% block shell_title %}LibraCore{% endblock %}</div>
+          </div>
+          <div class="topbar-actions">
+            <a class="ghost-link" href="{% url 'discovery:home' %}">OPAC</a>
+            <a class="ghost-link" href="{% url 'repository:list' %}">數位典藏</a>
+            <a class="ghost-link" href="/api/">API</a>
+            {% if request.user.is_authenticated %}
+              <a class="ghost-link" href="{% url 'discovery:account_dashboard' %}">我的帳戶</a>
+              <form method="post" action="{% url 'logout' %}">
+                {% csrf_token %}<button class="button button-muted" type="submit">登出</button>
+              </form>
+            {% else %}
+              <a class="button button-primary" href="{% url 'login' %}">登入</a>
+            {% endif %}
+          </div>
+        </header>
+        <main class="content">
+  {% else %}
+    <header class="public-header">
+      <a class="public-brand" href="{% url 'discovery:home' %}">
+        <span class="brand-mark">LC</span>
+        <span>LibraCore</span>
+      </a>
+      <nav class="public-nav" aria-label="Public navigation">
+        <a href="{% url 'discovery:home' %}">館藏查詢</a>
+        <a href="{% url 'repository:list' %}">數位典藏</a>
+        <a href="{% url 'authorities:browse' %}">權威瀏覽</a>
+        {% if request.user.is_authenticated %}
+          <a href="{% url 'discovery:account_dashboard' %}">我的帳戶</a>
+          <form method="post" action="{% url 'logout' %}">
+            {% csrf_token %}<button class="button button-muted" type="submit">登出</button>
+          </form>
+        {% else %}
+          <a class="button button-primary" href="{% url 'login' %}">登入</a>
+        {% endif %}
+        <a href="{% url 'staff:import_batch_list' %}">Staff</a>
+      </nav>
+    </header>
+    <main class="public-main">
+  {% endif %}
+
+  {% if messages %}
+    <ul class="messages" data-tour-id="system-messages">
+      {% for message in messages %}<li>{{ message }}<button type="button" data-dismiss-message>×</button></li>{% endfor %}
+    </ul>
+  {% endif %}
+  {% block content %}{% endblock %}
+
+  {% if '/staff/' in request.path %}
+        </main>
+      </div>
+    </div>
+  {% else %}
+    </main>
+  {% endif %}
+</body>
+</html>

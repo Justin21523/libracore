@@ -1,0 +1,138 @@
+{% extends "base.html" %}
+{% block title %}流通櫃台{% endblock %}
+{% block shell_title %}流通櫃台{% endblock %}
+{% block content %}
+<section class="panel" data-tour-id="circulation-header">
+  <div class="panel-header">
+    <div>
+      <p class="eyebrow">Circulation desk</p>
+      <h1>流通櫃台</h1>
+      <p>以讀者條碼與單冊條碼完成查找、借出、還書、續借與預約待取處理。</p>
+    </div>
+    <div class="toolbar tight">
+      <a class="button button-muted" href="{% url 'staff:patron_list' %}">讀者管理</a>
+      <a class="button button-muted" href="{% url 'staff:fee_list' %}">費用</a>
+      <a class="button button-muted" href="{% url 'staff:payment_list' %}">付款</a>
+      <a class="button button-muted" href="{% url 'staff:circulation_reports' %}">報表</a>
+    </div>
+  </div>
+</section>
+
+<section class="panel" data-tour-id="circulation-lookup">
+  <h2>查找</h2>
+  <form method="get" class="grid three">
+    <div>
+      <label>讀者條碼</label>
+      <input name="patron_barcode" value="{{ patron.barcode }}" placeholder="例如 P000001">
+    </div>
+    <div>
+      <label>單冊條碼</label>
+      <input name="item_barcode" value="{{ item.barcode }}" placeholder="例如 I000001">
+    </div>
+    <div class="toolbar"><button type="submit">查找</button></div>
+  </form>
+</section>
+
+<div class="grid two">
+  <section class="panel" data-tour-id="circulation-checkout">
+    <h2>借出</h2>
+    <form method="post" action="{% url 'staff:circulation_checkout' %}">
+      {% csrf_token %}
+      <label>讀者條碼</label>
+      <input name="patron_barcode" value="{{ patron.barcode }}">
+      <label>單冊條碼</label>
+      <input name="item_barcode" value="{{ item.barcode }}">
+      <div class="toolbar"><button type="submit">借出</button></div>
+    </form>
+  </section>
+  <section class="panel" data-tour-id="circulation-checkin">
+    <h2>還書</h2>
+    <form method="post" action="{% url 'staff:circulation_return' %}">
+      {% csrf_token %}
+      <label>單冊條碼</label>
+      <input name="item_barcode" value="{{ item.barcode }}">
+      <div class="toolbar"><button type="submit">還書</button></div>
+    </form>
+  </section>
+</div>
+
+{% if patron %}
+<section class="panel" data-tour-id="circulation-patron-summary">
+  <div class="panel-header">
+    <h2>讀者摘要</h2>
+    <a class="button button-muted" href="{% url 'staff:patron_detail' patron.id %}">讀者詳情</a>
+  </div>
+  <div class="metric-grid">
+    <div class="metric"><span>條碼</span><strong>{{ patron.barcode }}</strong></div>
+    <div class="metric"><span>未繳費用</span><strong>{{ fee_balance }}</strong></div>
+    <div class="metric"><span>目前借閱</span><strong>{{ open_loans|length }}</strong></div>
+    <div class="metric"><span>預約</span><strong>{{ holds|length }}</strong></div>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <tr><th>帳號</th><td>{{ patron.user.username }} / {{ patron.user.email|default:"-" }}</td></tr>
+      <tr><th>類型</th><td>{{ patron.patron_type }}</td></tr>
+      <tr><th>到期日</th><td>{{ patron.expiry_date|date:"Y-m-d"|default:"-" }}</td></tr>
+      <tr><th>封鎖原因</th><td>{% for reason in block_reasons %}{{ reason }}{% if not forloop.last %}; {% endif %}{% empty %}-{% endfor %}</td></tr>
+    </table>
+  </div>
+</section>
+
+<div class="grid two">
+  <section class="panel" data-tour-id="circulation-open-loans">
+    <h2>目前借閱</h2>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>題名</th><th>條碼</th><th>到期日</th><th>續借</th></tr></thead>
+        <tbody>
+          {% for loan in open_loans %}
+            <tr>
+              <td>{{ loan.item.holding.instance.title_statement }}</td>
+              <td>{{ loan.item.barcode }}</td>
+              <td>{{ loan.due_at|date:"Y-m-d" }}</td>
+              <td>
+                <form method="post" action="{% url 'staff:circulation_renew' loan.id %}">
+                  {% csrf_token %}<button class="secondary" type="submit">續借</button>
+                </form>
+              </td>
+            </tr>
+          {% empty %}<tr><td colspan="4">沒有目前借閱。</td></tr>{% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+  <section class="panel" data-tour-id="circulation-holds">
+    <h2>預約</h2>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>題名</th><th>狀態</th><th>排隊</th></tr></thead>
+        <tbody>
+          {% for hold in holds %}
+            <tr>
+              <td>{% if hold.instance %}{{ hold.instance.title_statement }}{% elif hold.item %}{{ hold.item.holding.instance.title_statement }}{% else %}-{% endif %}</td>
+              <td><span class="status {{ hold.status }}">{{ hold.status }}</span></td>
+              <td>{{ hold.queue_position }}</td>
+            </tr>
+          {% empty %}<tr><td colspan="3">沒有預約。</td></tr>{% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+</div>
+{% endif %}
+
+{% if item %}
+<section class="panel" data-tour-id="circulation-item-summary">
+  <div class="panel-header"><h2>單冊摘要</h2></div>
+  <div class="table-wrap">
+    <table>
+      <tr><th>條碼</th><td>{{ item.barcode }}</td></tr>
+      <tr><th>題名</th><td>{{ item.holding.instance.title_statement }}</td></tr>
+      <tr><th>館藏地</th><td>{{ item.holding.location.name }}</td></tr>
+      <tr><th>狀態</th><td><span class="status {{ item.status }}">{{ item.status }}</span></td></tr>
+      <tr><th>到期日</th><td>{{ item.due_back_at|date:"Y-m-d"|default:"-" }}</td></tr>
+    </table>
+  </div>
+</section>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}數位典藏工作台{% endblock %}
+{% block shell_title %}典藏工作台{% endblock %}
+{% block content %}
+<section class="panel" data-tour-id="repository-staff-list">
+  <div class="panel-header">
+    <div>
+      <p class="eyebrow">Digital repository</p>
+      <h1>數位典藏工作台</h1>
+      <p>管理 Dublin Core metadata、公開檔案、OAI identifier 與發布狀態。</p>
+    </div>
+    <a class="button button-primary" href="{% url 'staff:repository_object_new' %}">新增數位物件</a>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>題名</th><th>狀態</th><th>書目</th><th>檔案</th><th>OAI</th></tr></thead>
+      <tbody>
+        {% for object in objects %}
+          <tr>
+            <td><a href="{% url 'staff:repository_object_detail' object.id %}">{{ object.title }}</a></td>
+            <td><span class="status {{ object.status }}">{{ object.status }}</span></td>
+            <td>{% if object.bibliographic_record and object.bibliographic_record.instance %}{{ object.bibliographic_record.instance.title_statement }}{% else %}-{% endif %}</td>
+            <td>{{ object.file_assets.count }}</td>
+            <td>{{ object.oai_identifier|default:"-" }}</td>
+          </tr>
+        {% empty %}
+          <tr><td colspan="5">尚無數位物件。</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+{% endblock %}

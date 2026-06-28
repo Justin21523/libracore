@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}Audit Detail{% endblock %}
+{% block content %}
+<h1>Audit Detail</h1>
+<section class="panel">
+  <p><strong>Action</strong> {{ log.action }}</p>
+  <p><strong>Actor</strong> {% if log.actor %}{{ log.actor.username }}{% else %}-{% endif %}</p>
+  <p><strong>Entity</strong> {{ log.entity_type.model }} {{ log.entity_id }}</p>
+  <p><strong>Created</strong> {{ log.created_at }}</p>
+</section>
+<section class="panel">
+  <h2>Diff</h2>
+  <table>
+    <thead><tr><th>Path</th><th>Before</th><th>After</th></tr></thead>
+    <tbody>
+      {% for change in diff %}
+        <tr><td>{{ change.path }}</td><td><pre>{{ change.before }}</pre></td><td><pre>{{ change.after }}</pre></td></tr>
+      {% empty %}
+        <tr><td colspan="3">無差異。</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</section>
+<div class="grid">
+  <section class="panel"><h2>Before</h2><pre>{{ log.before }}</pre></section>
+  <section class="panel"><h2>After</h2><pre>{{ log.after }}</pre></section>
+</div>
+{% endblock %}

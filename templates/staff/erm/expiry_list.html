@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block title %}ERM 到期提醒{% endblock %}
+{% block content %}
+<h1>ERM 到期提醒</h1>
+<div class="grid">
+  <section class="panel">
+    <h2>Licenses</h2>
+    <table>
+      <thead><tr><th>Name</th><th>Vendor</th><th>Ends</th><th>Notice days</th></tr></thead>
+      <tbody>
+        {% for license in licenses %}
+          <tr>
+            <td><a href="{% url 'staff:erm_license_detail' license.id %}">{{ license.name }}</a></td>
+            <td>{{ license.vendor.name|default:license.licensor|default:"-" }}</td>
+            <td>{{ license.ends_at|date:"Y-m-d" }}</td>
+            <td>{{ license.renewal_notice_days }}</td>
+          </tr>
+        {% empty %}
+          <tr><td colspan="4">目前沒有到期提醒。</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </section>
+  <section class="panel">
+    <h2>Packages</h2>
+    <table>
+      <thead><tr><th>Name</th><th>Status</th><th>Platform</th><th>Ends</th></tr></thead>
+      <tbody>
+        {% for package in packages %}
+          <tr>
+            <td>{{ package.name }}</td>
+            <td>{{ package.status }}</td>
+            <td>{{ package.platform.name|default:"-" }}</td>
+            <td>{{ package.ends_at|date:"Y-m-d" }}</td>
+          </tr>
+        {% empty %}
+          <tr><td colspan="4">目前沒有套裝到期資料。</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </section>
+</div>
+{% endblock %}

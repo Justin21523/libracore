@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block title %}ERM Licenses{% endblock %}
+{% block content %}
+<h1>ERM Licenses</h1>
+<div class="toolbar">
+  <a class="button secondary" href="{% url 'staff:erm_resource_list' %}">電子資源</a>
+  <a class="button secondary" href="{% url 'staff:erm_expiry_list' %}">到期提醒</a>
+</div>
+<table>
+  <thead><tr><th>Name</th><th>Status</th><th>Vendor</th><th>Ends</th><th>Resources</th></tr></thead>
+  <tbody>
+    {% for license in licenses %}
+      <tr>
+        <td><a href="{% url 'staff:erm_license_detail' license.id %}">{{ license.name }}</a></td>
+        <td><span class="status {{ license.status }}">{{ license.status }}</span></td>
+        <td>{{ license.vendor.name|default:license.licensor|default:"-" }}</td>
+        <td>{{ license.ends_at|date:"Y-m-d"|default:"-" }}</td>
+        <td>{{ license.resources.count }}</td>
+      </tr>
+    {% empty %}
+      <tr><td colspan="5">尚無 License。</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

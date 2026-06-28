@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block title %}期刊管理{% endblock %}
+{% block content %}
+<h1>期刊管理</h1>
+<table>
+  <thead><tr><th>題名</th><th>ISSN</th><th>訂閱</th><th>Issues</th></tr></thead>
+  <tbody>
+  {% for serial in serials %}
+    <tr>
+      <td>{{ serial.title }}</td><td>{{ serial.issn }}</td>
+      <td>{% for sub in serial.subscriptions.all %}<a href="{% url 'staff:subscription_detail' sub.id %}">{{ sub.status }}</a> {% empty %}-{% endfor %}</td>
+      <td>{{ serial.issues.count }}</td>
+    </tr>
+  {% empty %}<tr><td colspan="4">尚無期刊。</td></tr>{% endfor %}
+  </tbody>
+</table>
+{% endblock %}
+

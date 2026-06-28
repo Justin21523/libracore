@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}權威瀏覽{% endblock %}
+{% block content %}
+<h1>權威瀏覽</h1>
+<form method="get" class="panel">
+  <label>查詢標目</label>
+  <input name="q" value="{{ query }}">
+  <label>類型</label>
+  <input name="authority_type" value="{{ authority_type }}">
+  <div class="toolbar">
+    <button type="submit">瀏覽</button>
+    <a class="button secondary" href="{% url 'authorities:subjects' %}">主題瀏覽</a>
+  </div>
+</form>
+<table>
+  <thead><tr><th>標目</th><th>類型</th><th>狀態</th></tr></thead>
+  <tbody>
+  {% for authority in authorities %}
+    <tr>
+      <td><a href="{% url 'authorities:detail' authority.id %}">{{ authority }}</a></td>
+      <td>{{ authority.authority_type }}</td>
+      <td>{{ authority.status }}</td>
+    </tr>
+  {% empty %}<tr><td colspan="3">沒有權威紀錄。</td></tr>{% endfor %}
+  </tbody>
+</table>
+{% endblock %}
+

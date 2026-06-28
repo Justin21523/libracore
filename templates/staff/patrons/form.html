@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block title %}{% if patron %}編輯讀者{% else %}新增讀者{% endif %}{% endblock %}
+{% block content %}
+<h1>{% if patron %}編輯讀者{% else %}新增讀者{% endif %}</h1>
+<form method="post" class="panel">
+  {% csrf_token %}
+  <label>User</label>
+  <select name="user_id">
+    {% for user in users %}
+      <option value="{{ user.id }}" {% if patron.user_id == user.id %}selected{% endif %}>{{ user.username }} {{ user.email }}</option>
+    {% endfor %}
+  </select>
+  <label>讀者條碼</label>
+  <input name="barcode" value="{{ patron.barcode }}">
+  <label>讀者類型</label>
+  <input name="patron_type" value="{{ patron.patron_type|default:'standard' }}">
+  <label>到期日</label>
+  <input name="expiry_date" type="date" value="{{ patron.expiry_date|date:'Y-m-d' }}">
+  <label>所屬館</label>
+  <select name="home_branch_id">
+    <option value="">-</option>
+    {% for branch in branches %}
+      <option value="{{ branch.id }}" {% if patron.home_branch_id == branch.id %}selected{% endif %}>{{ branch.name }}</option>
+    {% endfor %}
+  </select>
+  <label><input type="checkbox" name="privacy_opt_in" {% if patron.privacy_opt_in %}checked{% endif %}> privacy opt-in</label>
+  <div class="toolbar"><button type="submit">儲存</button></div>
+</form>
+{% endblock %}

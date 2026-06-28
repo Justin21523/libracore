@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+{% block title %}{{ instance.title_statement }}{% endblock %}
+{% block content %}
+<h1>{{ instance.title_statement }}</h1>
+<p>{{ instance.responsibility_statement }}</p>
+<div class="grid">
+  <section class="panel">
+    <h2>書目資訊</h2>
+    <table>
+      <tr><th>作品</th><td>{{ instance.work.primary_title|default:"-" }}</td></tr>
+      <tr><th>版本</th><td>{{ instance.edition_statement|default:"-" }}</td></tr>
+      <tr><th>出版</th><td>{{ instance.publication_place }} {{ instance.publisher }} {{ instance.publication_date }}</td></tr>
+      <tr><th>稽核項</th><td>{{ instance.extent|default:"-" }}</td></tr>
+      <tr><th>資料類型</th><td>{{ instance.resource_type }}</td></tr>
+      <tr><th>識別號</th><td>{{ instance.identifiers }}</td></tr>
+    </table>
+  </section>
+  <section class="panel">
+    <h2>附註</h2>
+    {% if instance.notes %}
+      <ul>{% for note in instance.notes %}<li>{{ note.value }}</li>{% endfor %}</ul>
+    {% else %}
+      <p>-</p>
+    {% endif %}
+  </section>
+</div>
+<section class="panel" hx-get="{% url 'discovery:record_availability' instance.id %}" hx-trigger="load" hx-swap="innerHTML">
+  {% include "opac/partials/availability.html" %}
+</section>
+<section class="panel">
+  <h2>預約</h2>
+  {% if request.user.is_authenticated %}
+    {% if patron_context.can_place_hold %}
+      <p>取書館藏地：{{ patron_context.pickup_location.name }}</p>
+      <form method="post" action="{% url 'discovery:record_place_hold' instance.id %}">
+        {% csrf_token %}
+        <button type="submit">預約此書</button>
+      </form>
+    {% elif patron_context.patron %}
+      <p>目前無法預約此書。</p>
+    {% else %}
+      <p>尚未建立讀者檔，無法預約。</p>
+    {% endif %}
+  {% else %}
+    <p><a href="{% url 'login' %}?next={{ request.path }}">登入後可預約。</a></p>
+  {% endif %}
+</section>
+{% if online_resources %}
+<section class="panel">
+  <h2>線上資源</h2>
+  <table>
+    <thead><tr><th>資源</th><th>平台</th><th>Coverage</th><th>Access</th></tr></thead>
+    <tbody>
+      {% for entry in online_resources %}
+        <tr>
+          <td>{{ entry.resource.title }} <span class="status {{ entry.resource.status }}">{{ entry.resource.status }}</span></td>
+          <td>{{ entry.resource.platform_ref.name|default:entry.resource.platform|default:"-" }}</td>
+          <td>
+            {% for statement in entry.coverage_statements %}
+              <div>{{ statement }}</div>
+            {% empty %}-{% endfor %}
+          </td>
+          <td>
+            {% for link in entry.access_links %}
+              <a class="button secondary" href="{{ link.url }}">{{ link.label }}</a>
+            {% empty %}-{% endfor %}
+          </td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</section>
+{% endif %}
+{% if digital_objects %}
+<section class="panel">
+  <h2>數位典藏</h2>
+  <table>
+    <thead><tr><th>題名</th><th>Rights</th><th>檔案</th></tr></thead>
+    <tbody>
+      {% for entry in digital_objects %}
+        <tr>
+          <td><a href="{% url 'repository:detail' entry.object.id %}">{{ entry.object.title }}</a></td>
+          <td>{{ entry.object.rights_statement|default:"-" }}</td>
+          <td>
+            {% for asset in entry.public_files %}
+              <a class="button secondary" href="{% url 'repository:file_download' asset.id %}">{{ asset.label|default:asset.file.name }}</a>
+            {% empty %}-{% endfor %}
+          </td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</section>
+{% endif %}
+{% if instance.serial_title %}
+<section class="panel">
+  <h2>期刊館藏</h2>
+  <p>{{ instance.serial_title.holding.textual_holdings }}</p>
+  <table>
+    <thead><tr><th>卷期</th><th>年代</th><th>狀態</th><th>到刊日</th></tr></thead>
+    <tbody>
+    {% for issue in instance.serial_title.issues.all %}
+      <tr><td>{{ issue.enumeration }}</td><td>{{ issue.chronology }}</td><td>{{ issue.status }}</td><td>{{ issue.received_at }}</td></tr>
+    {% empty %}<tr><td colspan="4">尚無期刊到刊資料。</td></tr>{% endfor %}
+    </tbody>
+  </table>
+</section>
+{% endif %}
+{% endblock %}

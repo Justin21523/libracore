@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block title %}ERM Packages{% endblock %}
+{% block content %}
+<h1>ERM Packages</h1>
+<table>
+  <thead><tr><th>Name</th><th>Status</th><th>Platform</th><th>Vendor</th><th>Ends</th><th>Resources</th></tr></thead>
+  <tbody>
+    {% for package in packages %}
+      <tr>
+        <td>{{ package.name }}</td>
+        <td><span class="status {{ package.status }}">{{ package.status }}</span></td>
+        <td>{{ package.platform.name|default:"-" }}</td>
+        <td>{{ package.vendor.name|default:"-" }}</td>
+        <td>{{ package.ends_at|date:"Y-m-d"|default:"-" }}</td>
+        <td>{{ package.resources.count }}</td>
+      </tr>
+    {% empty %}
+      <tr><td colspan="6">尚無套裝。</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

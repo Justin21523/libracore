@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block title %}我的預約{% endblock %}
+{% block content %}
+<h1>我的預約</h1>
+{% if not patron %}
+  <section class="panel"><p>尚未建立讀者檔。</p></section>
+{% else %}
+<table>
+  <thead><tr><th>題名</th><th>取書館藏地</th><th>排隊</th><th>狀態</th><th>到期</th><th>取消</th></tr></thead>
+  <tbody>
+    {% for hold in holds %}
+      <tr>
+        <td>
+          {% if hold.instance %}
+            {{ hold.instance.title_statement }}
+          {% elif hold.item %}
+            {{ hold.item.holding.instance.title_statement }}
+          {% else %}
+            -
+          {% endif %}
+        </td>
+        <td>{{ hold.pickup_location.name }}</td>
+        <td>{{ hold.queue_position }}</td>
+        <td><span class="status {{ hold.status }}">{{ hold.status }}</span></td>
+        <td>{{ hold.expires_at|date:"Y-m-d"|default:"-" }}</td>
+        <td>
+          {% if hold.status == "queued" or hold.status == "ready" %}
+            <form method="post" action="{% url 'discovery:account_cancel_hold' hold.id %}">
+              {% csrf_token %}<button class="secondary" type="submit">取消</button>
+            </form>
+          {% else %}-{% endif %}
+        </td>
+      </tr>
+    {% empty %}
+      <tr><td colspan="6">沒有預約紀錄。</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}{{ subscription.serial_title.title }}{% endblock %}
+{% block content %}
+<h1>{{ subscription.serial_title.title }}</h1>
+<p>{{ subscription.branch }} {{ subscription.location }} <span class="status {{ subscription.status }}">{{ subscription.status }}</span></p>
+<form method="post" action="{% url 'staff:subscription_generate_issues' subscription.id %}" class="panel">
+  {% csrf_token %}
+  <label>產生期數</label>
+  <input type="number" name="count" min="1" value="1">
+  <div class="toolbar"><button type="submit">產生 expected issues</button></div>
+</form>
+<table>
+  <thead><tr><th>卷期</th><th>年代</th><th>預期</th><th>狀態</th><th>條碼</th><th>操作</th></tr></thead>
+  <tbody>
+  {% for issue in subscription.issues.all %}
+    <tr>
+      <td>{{ issue.enumeration }}</td><td>{{ issue.chronology }}</td><td>{{ issue.expected_at }}</td><td>{{ issue.status }}</td><td>{{ issue.item.barcode }}</td>
+      <td>
+        <form method="post" action="{% url 'staff:issue_check_in' issue.id %}">{% csrf_token %}<button type="submit">到刊</button></form>
+        <form method="post" action="{% url 'staff:issue_mark_missing' issue.id %}">{% csrf_token %}<button class="secondary" type="submit">缺期</button></form>
+        <form method="post" action="{% url 'staff:issue_claim' issue.id %}">{% csrf_token %}<button class="secondary" type="submit">催缺</button></form>
+      </td>
+    </tr>
+  {% empty %}<tr><td colspan="6">尚無 issues。</td></tr>{% endfor %}
+  </tbody>
+</table>
+{% endblock %}
+

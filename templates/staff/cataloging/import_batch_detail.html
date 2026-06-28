@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% block title %}匯入批次 {{ batch.filename }}{% endblock %}
+{% block shell_title %}MARC 匯入批次{% endblock %}
+{% block content %}
+<section class="panel" data-tour-id="cataloging-batch-summary">
+  <div class="panel-header">
+    <div>
+      <p class="eyebrow">Import batch</p>
+      <h1>{{ batch.filename|default:batch.id }}</h1>
+      <p>來源 {{ batch.source|default:"-" }}，格式 {{ batch.import_format }}，共 {{ batch.record_count }} 筆。</p>
+    </div>
+    <span class="status {{ batch.status }}">{{ batch.status }}</span>
+  </div>
+  <div class="metric-grid">
+    <div class="metric"><span>Total</span><strong>{{ batch.record_count }}</strong></div>
+    <div class="metric"><span>Valid</span><strong>{{ batch.valid_count }}</strong></div>
+    <div class="metric"><span>Invalid</span><strong>{{ batch.invalid_count }}</strong></div>
+    <div class="metric"><span>Conflict</span><strong>{{ batch.conflict_count }}</strong></div>
+  </div>
+  <div class="toolbar">
+    <form method="post" action="{% url 'staff:import_batch_parse' batch.id %}" hx-post="{% url 'staff:import_batch_parse' batch.id %}" hx-target="body">
+      {% csrf_token %}
+      <button type="submit">解析批次</button>
+    </form>
+    <a class="button button-muted" href="{% url 'staff:import_batch_list' %}">返回批次列表</a>
+  </div>
+</section>
+
+<section class="panel" data-tour-id="cataloging-batch-records">
+  <div class="panel-header">
+    <h2>批次紀錄</h2>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Control number</th>
+          <th>格式</th>
+          <th>狀態</th>
+          <th>錯誤 / 衝突</th>
+          <th>操作</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for record in records %}
+          <tr>
+            <td>{{ record.sequence }}</td>
+            <td>{{ record.control_number|default:"-" }}</td>
+            <td><span class="status">{{ record.format_type }}</span></td>
+            <td><span class="status {{ record.status }}">{{ record.status }}</span></td>
+            <td>
+              {% if record.conflict_reason %}{{ record.conflict_reason }}{% endif %}
+              {% if record.validation_errors %}<pre>{{ record.validation_errors }}</pre>{% endif %}
+            </td>
+            <td><a class="button button-muted" href="{% url 'staff:import_record_review' record.id %}">審核</a></td>
+          </tr>
+        {% empty %}
+          <tr><td colspan="6">批次內沒有紀錄。</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+{% endblock %}

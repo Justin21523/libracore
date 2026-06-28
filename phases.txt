@@ -1,0 +1,994 @@
+ 
+可以。這個 Django 全端圖書資訊系統，我會建議不要一開始就做成「一般圖書借還 CRUD」，而是把它設計成一個**真正有圖書資訊學深度的 Library Information System / ILS + Discovery + Digital Repository 雛形**。你前面貼的內容也提到：不能只做「會員、書籍、借閱紀錄」三張表，否則 MARC21、RDA、權威控制、館藏層次都會變成假裝有專業的裝飾品。
+
+下面是我建議的完整專案計畫。
+
+---
+
+# 一、專案定位
+
+專案名稱可以先暫定：
+
+```text
+LibraCore — Django Library Information System
+```
+
+或比較作品集感一點：
+
+```text
+LibraSphere — Library Metadata, Circulation & Discovery Platform
+```
+
+這個系統不是單純的「圖書館借還書系統」，而是：
+
+> 一套以 Django 建立的全端圖書資訊系統，整合書目管理、MARC21 metadata、RDA / Work-Instance-Item 概念、權威控制、館藏管理、流通借還、OPAC 搜尋、數位典藏與後台管理。
+
+技術棧建議：
+
+```text
+Backend / Full-stack Framework: Django
+Database: PostgreSQL
+Frontend: Django Templates + HTMX + Tailwind CSS
+API: Django REST Framework
+Search: PostgreSQL Full-text Search，後期可接 Meilisearch / OpenSearch
+Admin: Django Admin + 自製館員後台
+Authentication: Django Auth
+Deployment: Docker + Gunicorn + Nginx
+```
+
+為什麼我建議先用 Django Template + HTMX，而不是一開始就 React？
+
+因為你現在的重點是**完整圖書資訊系統邏輯**，不是被 React 狀態管理拖去打架。Django 本身就很適合做資料庫後台、管理系統、表單、權限、搜尋與 workflow。等後端 domain 穩定後，再補 React 前台也不晚。
+
+---
+
+# 二、整體開發階段總覽
+
+我建議分成 **12 個主要 Phase**。
+
+```text
+Phase 0  專案規格與架構設計
+Phase 1  Django 專案基礎建置
+Phase 2  核心書目資料模型
+Phase 3  MARC21 原始紀錄與解析
+Phase 4  Work / Instance / Item 書目層次
+Phase 5  權威控制與控制詞彙
+Phase 6  館藏、單冊、索書號與館藏地
+Phase 7  讀者、流通、借還、預約
+Phase 8  OPAC / Discovery 搜尋前台
+Phase 9  館員後台與編目工作台
+Phase 10 數位典藏與檔案資產管理
+Phase 11 報表、稽核、權限與資料治理
+Phase 12 Demo 包裝、README、測試、部署
+```
+
+每個 Phase 都應該能獨立驗收，這樣比較不會做到一半爆炸。大型系統最怕「全部一起做」，最後只得到一坨資料表義大利麵。
+
+---
+
+# Phase 0：專案規格與架構設計
+
+## 目標
+
+先建立完整規格，不急著寫程式。這一步是防止 coding agent 把系統簡化成：
+
+```text
+Book
+User
+Loan
+```
+
+這種玩具等級架構。
+
+## 要完成的內容
+
+建立文件：
+
+```text
+docs/
+├── 00_project_vision.md
+├── 01_domain_model.md
+├── 02_marc21_design.md
+├── 03_rda_lrm_bibframe_mapping.md
+├── 04_authority_control.md
+├── 05_database_schema.md
+├── 06_api_design.md
+├── 07_ui_ux_plan.md
+├── 08_development_roadmap.md
+└── 09_testing_strategy.md
+```
+
+## 這階段要定義的核心問題
+
+1. 系統是大學圖書館、公共圖書館，還是個人典藏？
+2. 先支援繁體中文與英文。
+3. 書目層次採用哪種模型？
+
+   * Work
+   * Instance / Manifestation
+   * Item
+4. MARC21 如何保留原始資料？
+5. OPAC 搜尋要支援哪些 facets？
+6. 權威控制要做到什麼程度？
+7. MVP 哪些功能先做，哪些延後？
+
+## 驗收標準
+
+這階段完成後，你要有一份能交給 coding agent 的規格書，而不是只有想法。
+
+---
+
+# Phase 1：Django 專案基礎建置
+
+## 目標
+
+建立乾淨、可維護、可擴充的 Django 專案骨架。
+
+## 建議 App 拆分
+
+```text
+config/                 # Django project settings
+apps/
+├── core/               # 共用功能
+├── accounts/           # 使用者與權限
+├── catalog/            # 書目核心
+├── marc/               # MARC21 儲存與解析
+├── authorities/        # 權威控制
+├── vocabularies/       # 控制詞彙與分類法
+├── holdings/           # 館藏與單冊
+├── circulation/        # 借還、預約、逾期
+├── acquisitions/       # 採購
+├── serials/            # 期刊
+├── discovery/          # OPAC / 搜尋
+├── repository/         # 數位典藏
+├── analytics/          # 報表
+└── staff/              # 館員後台
+```
+
+## 技術內容
+
+安裝：
+
+```text
+Django
+Django REST Framework
+PostgreSQL driver
+django-environ
+django-filter
+pytest-django
+black / ruff
+```
+
+## 要完成的功能
+
+1. 建立 Django project。
+2. 設定 PostgreSQL。
+3. 設定 `.env`。
+4. 建立 base template。
+5. 建立 Tailwind 或 Bootstrap 基礎樣式。
+6. 設定登入、登出。
+7. 建立基本 Dashboard。
+8. 建立共用 model mixins：
+
+   * UUID primary key
+   * created_at
+   * updated_at
+   * soft delete
+   * audit fields
+
+## 驗收標準
+
+可以啟動：
+
+```bash
+python manage.py runserver
+```
+
+可以進入：
+
+```text
+/
+ /admin/
+ /staff/
+ /accounts/login/
+```
+
+---
+
+# Phase 2：核心書目資料模型
+
+## 目標
+
+先建立圖書資訊系統最重要的核心：**書目資料不是一張 books 表**。
+
+## 核心 Entity
+
+```text
+BibliographicRecord
+Work
+Instance
+Item
+Contributor
+PublicationStatement
+Identifier
+Subject
+ClassificationNumber
+Language
+Note
+```
+
+## 建議資料層次
+
+```text
+Work
+  ↓
+Instance / Manifestation
+  ↓
+Item
+```
+
+### Work
+
+代表抽象作品。
+
+例如：
+
+```text
+哈利波特與神秘的魔法石
+```
+
+### Instance / Manifestation
+
+代表某個出版版本。
+
+例如：
+
+```text
+繁體中文版
+英文原文版
+20週年紀念版
+電子書版
+```
+
+### Item
+
+代表館內實際那一本。
+
+例如：
+
+```text
+條碼號 312000001
+總館 3F 書庫 A 架
+目前可借
+```
+
+## 要完成的功能
+
+1. 建立 catalog app models。
+2. 建立書目紀錄 CRUD。
+3. 建立 Work / Instance / Item 關聯。
+4. 建立基本資料驗證。
+5. Django Admin 可以管理資料。
+6. 建立 seed data。
+
+## 驗收標準
+
+可以在後台建立：
+
+```text
+一筆作品
+一個出版版本
+三本實體館藏
+```
+
+並且能清楚看到它們的層次。
+
+---
+
+# Phase 3：MARC21 原始紀錄與解析
+
+## 目標
+
+支援 MARC21，但不能把 MARC21 粗暴壓扁成 title / author / isbn。
+
+## 核心設計
+
+要有：
+
+```text
+MarcRecord
+MarcField
+MarcSubfield
+MarcImportJob
+MarcImportError
+MarcMappingRule
+```
+
+## MARC21 儲存策略
+
+每筆 MARC 要同時保存：
+
+```text
+1. raw_content        # 原始 MARC 資料
+2. marc_json          # 解析後 JSON 結構
+3. normalized fields  # 對應到內部書目模型
+4. import status      # 匯入狀態
+5. validation errors  # 錯誤訊息
+```
+
+## 先支援的 MARC 欄位
+
+```text
+020 ISBN
+022 ISSN
+041 Language
+082 DDC
+090 Local Call Number
+100 Main Personal Author
+245 Title Statement
+246 Variant Title
+250 Edition
+260 / 264 Publication
+300 Physical Description
+490 Series
+500 General Note
+504 Bibliography Note
+505 Contents Note
+520 Summary
+650 Subject
+700 Added Personal Name
+856 Electronic Location
+```
+
+## 要完成的功能
+
+1. 上傳 MARC JSON。
+2. 儲存 raw MARC。
+3. 解析欄位、指標、子欄位。
+4. 對應到 BibliographicRecord。
+5. 匯入錯誤報告。
+6. 建立 MARC 預覽頁面。
+
+## 驗收標準
+
+匯入一筆 MARC JSON 後，系統可以顯示：
+
+```text
+Title
+Author
+ISBN
+Publisher
+Publication year
+Subjects
+Classification
+Notes
+Raw MARC fields
+```
+
+而且 raw MARC 不會消失。
+
+---
+
+# Phase 4：Work / Instance / Item 書目層次強化
+
+## 目標
+
+讓系統真正呈現圖書資訊的層次，而不是把一本書當成單一物件。
+
+## 要完成的功能
+
+1. Work 頁面。
+2. Instance 頁面。
+3. Item 頁面。
+4. 版本關係。
+5. 翻譯關係。
+6. 叢書關係。
+7. 相關作品。
+8. 同一作品不同版本聚合顯示。
+
+## 頁面範例
+
+OPAC 上搜尋一本書時，不應該只看到：
+
+```text
+書名：XXX
+作者：YYY
+```
+
+而是要能看到：
+
+```text
+作品：XXX
+├── 繁體中文版
+│   ├── 總館：可借 2 本
+│   └── 分館：可借 1 本
+├── 英文版
+│   └── 總館：可借 1 本
+└── 電子書版
+    └── Online access
+```
+
+## 驗收標準
+
+使用者可以從作品頁看到不同版本與實體館藏。
+
+---
+
+# Phase 5：權威控制與控制詞彙
+
+## 目標
+
+建立圖書資訊系統的專業核心之一：權威控制。
+
+## 核心 Entity
+
+```text
+AuthorityRecord
+AuthorizedAccessPoint
+VariantAccessPoint
+AuthorityRelationship
+AuthoritySource
+Vocabulary
+VocabularyTerm
+SubjectHeading
+ClassificationScheme
+```
+
+## 權威類型
+
+```text
+Personal Name
+Corporate Body
+Meeting Name
+Uniform Title
+Topical Subject
+Geographic Name
+Genre / Form
+Series
+```
+
+## 要完成的功能
+
+1. 建立權威紀錄。
+2. 建立 authorized access point。
+3. 建立 variant access points。
+4. 支援 see / see also。
+5. 書目紀錄可連結權威。
+6. 編目時可以查找權威。
+7. 顯示同一作者的所有作品。
+8. 支援外部 URI 欄位，例如 VIAF、ORCID、LC URI。
+
+## 驗收標準
+
+例如建立：
+
+```text
+Authorized: 村上春樹
+Variants:
+- Murakami, Haruki
+- むらかみ はるき
+- 村上 春樹
+```
+
+書目連到此權威後，搜尋任何異名都能找到相關作品。
+
+---
+
+# Phase 6：館藏、單冊、索書號與館藏地
+
+## 目標
+
+建立真正的館藏管理，不要只在書本上放一個 status。
+
+## 核心 Entity
+
+```text
+Branch
+Location
+Shelf
+Holding
+Item
+Barcode
+CallNumber
+ItemStatus
+InventoryRecord
+```
+
+## 要完成的功能
+
+1. 分館管理。
+2. 館藏地管理。
+3. 書架 / 架位管理。
+4. 索書號管理。
+5. 單冊條碼。
+6. 單冊狀態：
+
+   * available
+   * checked_out
+   * on_hold
+   * missing
+   * lost
+   * repair
+   * withdrawn
+7. 館藏盤點基礎功能。
+
+## 驗收標準
+
+一本書可以有多個館藏地、多個單冊，每本單冊有自己的條碼與狀態。
+
+---
+
+# Phase 7：讀者、流通、借還、預約
+
+## 目標
+
+建立完整 circulation workflow。
+
+## 核心 Entity
+
+```text
+Patron
+PatronType
+Loan
+HoldRequest
+CheckoutTransaction
+ReturnTransaction
+Fine
+CirculationRule
+Notification
+```
+
+## 要完成的功能
+
+1. 讀者資料。
+2. 讀者類型：
+
+   * student
+   * faculty
+   * staff
+   * external
+3. 借書。
+4. 還書。
+5. 續借。
+6. 預約。
+7. 到館通知。
+8. 逾期。
+9. 罰款。
+10. 流通規則。
+
+## 流通規則範例
+
+```text
+大學生：最多借 10 本，借期 21 天
+研究生：最多借 20 本，借期 30 天
+教師：最多借 50 本，借期 60 天
+```
+
+## 驗收標準
+
+可以完整跑完：
+
+```text
+讀者登入
+→ 搜尋書籍
+→ 查看可借館藏
+→ 預約
+→ 館員借出
+→ 到期提醒
+→ 歸還
+→ 更新 item status
+```
+
+---
+
+# Phase 8：OPAC / Discovery 搜尋前台
+
+## 目標
+
+建立給一般讀者使用的搜尋入口。
+
+## 搜尋功能
+
+```text
+Keyword Search
+Advanced Search
+Title Search
+Author Search
+Subject Search
+ISBN Search
+Call Number Search
+Authority Browse
+Subject Browse
+Classification Browse
+```
+
+## Facets
+
+```text
+Resource Type
+Author
+Subject
+Publication Year
+Language
+Branch
+Availability
+Format
+Collection
+```
+
+## 頁面
+
+```text
+/search/
+ /records/<id>/
+ /works/<id>/
+ /authors/<id>/
+ /subjects/<id>/
+ /account/loans/
+ /account/holds/
+```
+
+## 搜尋結果應顯示
+
+```text
+書名
+作者
+出版資訊
+資源類型
+可借狀態
+館藏地
+主題
+版本數
+封面 placeholder
+```
+
+## 驗收標準
+
+讀者可以搜尋「作者異名」、「主題詞」、「ISBN」、「關鍵字」，並透過 facets 篩選。
+
+---
+
+# Phase 9：館員後台與編目工作台
+
+## 目標
+
+Django Admin 很好，但作品集不能只靠 Django Admin。你需要一個自製館員介面。
+
+## 後台模組
+
+```text
+Staff Dashboard
+Cataloging Workbench
+MARC Import Center
+Authority Control Workbench
+Holdings Manager
+Circulation Desk
+Patron Manager
+Reports
+System Settings
+```
+
+## 編目工作台功能
+
+1. 書目建立。
+2. MARC 欄位預覽。
+3. MARC mapping 狀態。
+4. 權威查找。
+5. 主題詞選擇。
+6. 分類號與索書號。
+7. 館藏與 item 建立。
+8. 編目審核狀態。
+
+## 驗收標準
+
+館員可以不用進 Django Admin，就完成基本編目流程。
+
+---
+
+# Phase 10：數位典藏與檔案資產管理
+
+## 目標
+
+結合你的圖書資訊與數位典藏背景，讓作品更有差異化。
+
+## 核心 Entity
+
+```text
+DigitalObject
+FileAsset
+DublinCoreRecord
+Collection
+RightsStatement
+AccessPolicy
+PreservationEvent
+```
+
+## 要完成的功能
+
+1. 上傳 PDF / image / audio / video。
+2. Dublin Core metadata。
+3. 檔案權限。
+4. 數位物件與書目紀錄連結。
+5. 856 electronic access。
+6. OAI-PMH 預留架構。
+7. 全文檢索預留架構。
+
+## 驗收標準
+
+一本書目紀錄可以連結數位檔案，例如：
+
+```text
+PDF full text
+Cover image
+Supplementary material
+Digitized manuscript image
+```
+
+---
+
+# Phase 11：報表、稽核、權限與資料治理
+
+## 目標
+
+讓系統看起來像真正能進機構使用，而不是 demo 玩具。
+
+## 報表
+
+```text
+館藏數量統計
+借閱排行榜
+逾期統計
+熱門主題
+讀者借閱趨勢
+館藏使用率
+MARC 匯入錯誤統計
+編目工作量
+```
+
+## 權限角色
+
+```text
+System Admin
+Cataloger
+Circulation Staff
+Acquisitions Staff
+Repository Manager
+Reader
+Guest
+```
+
+## 稽核
+
+```text
+AuditLog
+DataChangeLog
+ImportLog
+LoginLog
+PermissionChangeLog
+```
+
+## 驗收標準
+
+不同角色看到不同功能，重要操作都有紀錄。
+
+---
+
+# Phase 12：Demo 包裝、README、測試、部署
+
+## 目標
+
+最後不是只有能跑，而是要能展示給面試官。
+
+## 要完成的內容
+
+```text
+README.md
+docs/demo_script.md
+docs/system_architecture.md
+docs/database_design.md
+docs/marc21_mapping.md
+docs/screenshots.md
+sample_data/
+docker-compose.yml
+.env.example
+```
+
+## README 要包含
+
+1. 專案介紹。
+2. 系統特色。
+3. 技術棧。
+4. 圖書資訊專業概念。
+5. 功能截圖。
+6. 資料模型說明。
+7. 安裝方式。
+8. Demo 帳號。
+9. API 文件。
+10. 後續擴充方向。
+
+## 測試
+
+```text
+Model tests
+API tests
+MARC parser tests
+Authority control tests
+Circulation workflow tests
+Search tests
+Permission tests
+```
+
+## 驗收標準
+
+面試官可以：
+
+```text
+git clone
+docker compose up
+登入 demo 帳號
+匯入 MARC
+建立書目
+建立館藏
+借還書
+搜尋 OPAC
+查看報表
+```
+
+這樣就很有說服力。
+
+---
+
+# 三、MVP 建議範圍
+
+如果你要先做出第一版可以展示的 MVP，我建議不要一次把 12 個 Phase 全做滿。第一版 MVP 應該包含：
+
+```text
+Phase 1 Django 基礎建置
+Phase 2 核心書目資料模型
+Phase 3 MARC21 儲存與基本解析
+Phase 5 權威控制基本版
+Phase 6 館藏與單冊
+Phase 7 基礎借還
+Phase 8 基礎 OPAC 搜尋
+Phase 9 基礎館員後台
+Phase 12 README + Demo 包裝
+```
+
+可以延後的：
+
+```text
+採購 acquisitions
+期刊 serials
+ERM 電子資源管理
+完整 OAI-PMH
+完整 BIBFRAME export
+進階報表
+完整 Elasticsearch / OpenSearch
+```
+
+原因很簡單：你現在要做的是作品集，不是要真的替國圖重寫一套系統。不然做完可能你都畢業三次了。
+
+---
+
+# 四、推薦開發順序
+
+我建議你實作時採用這個順序：
+
+```text
+1. 先做規格文件
+2. 建 Django 專案
+3. 做 catalog models
+4. 做 MARC raw storage
+5. 做簡單 MARC parser
+6. 做 holdings / items
+7. 做 staff cataloging UI
+8. 做 OPAC search
+9. 做 circulation
+10. 做 authority control
+11. 做 digital repository
+12. 做 polish / tests / README
+```
+
+注意，我把 **circulation 借還** 放在比較後面。因為圖書資訊系統真正難的是書目、權威、館藏層次。借還書反而是比較直覺的交易流程。
+
+---
+
+# 五、每個 Phase 的建議 Git Commit 訊息
+
+你之後請 coding agent 實作時，可以每階段只給一個 commit：
+
+```bash
+git add .
+git commit -m "Phase 1: scaffold Django library information system"
+```
+
+後續：
+
+```bash
+git commit -m "Phase 2: implement bibliographic core domain models"
+git commit -m "Phase 3: add MARC21 raw storage and parser"
+git commit -m "Phase 4: model work instance item relationships"
+git commit -m "Phase 5: implement authority control foundation"
+git commit -m "Phase 6: add holdings items and call numbers"
+git commit -m "Phase 7: implement circulation workflows"
+git commit -m "Phase 8: build OPAC discovery search"
+git commit -m "Phase 9: add staff cataloging workbench"
+git commit -m "Phase 10: add digital repository module"
+git commit -m "Phase 11: add analytics audit and permissions"
+git commit -m "Phase 12: polish demo docs tests and deployment"
+```
+
+---
+
+# 六、我建議這個專案的最終展示亮點
+
+這個作品集如果做好，面試時可以主打這些亮點：
+
+## 1. 不是普通 CRUD
+
+你可以說：
+
+> 我沒有把圖書館系統簡化成 books / users / loans，而是參考圖書資訊學中的書目控制、館藏層次、MARC21、權威控制與 OPAC discovery 架構來設計 domain model。
+
+這句超有份量。
+
+## 2. Django 全端能力
+
+你能展示：
+
+```text
+Django Models
+Django Forms
+Django Templates
+Django Admin
+Django Auth
+Django REST Framework
+PostgreSQL
+Search
+Testing
+Deployment
+```
+
+## 3. 結合你的 LIS 背景
+
+這個專案跟你的圖書資訊背景高度相關，比做一般電商 Todo App 強很多。
+
+## 4. 可延伸成大型系統
+
+後續可以擴充：
+
+```text
+BIBFRAME export
+OAI-PMH
+Z39.50 / SRU
+Elasticsearch
+AI metadata suggestion
+Recommendation system
+Digital archive workflow
+```
+
+---
+
+# 七、最終建議版本
+
+我建議你的專案計畫正式定成：
+
+```text
+Phase 0：系統規格與圖書資訊 domain 設計
+Phase 1：Django 專案骨架、帳號、基礎後台
+Phase 2：書目核心 models：Work、Instance、Item、BibliographicRecord
+Phase 3：MARC21 原始資料儲存、解析、mapping、匯入報告
+Phase 4：館藏與單冊管理：Branch、Location、Holding、Item、Barcode、CallNumber
+Phase 5：權威控制：AuthorityRecord、AccessPoint、Variant、AuthorityLink
+Phase 6：OPAC Discovery：搜尋、facets、書目頁、作品頁、館藏可用狀態
+Phase 7：流通系統：Patron、Loan、HoldRequest、Checkout、Return、Fine
+Phase 8：館員工作台：編目、MARC 匯入、權威查找、館藏維護
+Phase 9：數位典藏：DigitalObject、Dublin Core、FileAsset、Rights
+Phase 10：報表與系統治理：Analytics、AuditLog、Permissions
+Phase 11：測試、Demo Data、README、Docker、部署
+Phase 12：作品集打磨：截圖、Demo Script、面試說明文件
+```
+
+這樣會比前面 12 階段更適合實作，因為順序更偏向「先做可展示核心，再逐步加深」。
+
+我的建議是：下一步先不要寫 code。下一步應該先產出 **Phase 0 的完整系統規格書**，然後再讓 coding agent 照規格建立 Django 專案。

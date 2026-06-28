@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block title %}新增權威{% endblock %}
+{% block content %}
+<h1>新增權威</h1>
+<form method="post" class="panel">
+  {% csrf_token %}
+  <label>權威類型</label>
+  <select name="authority_type">{% for value, label in types %}<option value="{{ value }}">{{ label }}</option>{% endfor %}</select>
+  <label>正式標目</label>
+  <input name="preferred_label" required>
+  <label>來源</label>
+  <input name="source" value="local">
+  <label>控制號</label>
+  <input name="control_number">
+  <label>Entity URI</label>
+  <input name="entity_uri">
+  <label>狀態</label>
+  <select name="status">{% for value, label in statuses %}<option value="{{ value }}">{{ label }}</option>{% endfor %}</select>
+  <div class="toolbar">
+    <button type="submit">建立</button>
+    <a class="button secondary" href="{% url 'staff:authority_list' %}">返回</a>
+  </div>
+</form>
+{% endblock %}
+

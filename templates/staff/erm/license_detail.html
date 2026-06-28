@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block title %}{{ license.name }}{% endblock %}
+{% block content %}
+<h1>{{ license.name }}</h1>
+<p><span class="status {{ license.status }}">{{ license.status }}</span> {{ license.starts_at }} - {{ license.ends_at }}</p>
+<div class="grid">
+  <section class="panel">
+    <h2>License</h2>
+    <table>
+      <tr><th>Licensor</th><td>{{ license.licensor|default:"-" }}</td></tr>
+      <tr><th>Vendor</th><td>{{ license.vendor.name|default:"-" }}</td></tr>
+      <tr><th>Invoice</th><td>{{ license.invoice.invoice_number|default:"-" }}</td></tr>
+      <tr><th>Renewal notice days</th><td>{{ license.renewal_notice_days }}</td></tr>
+      <tr><th>Notes</th><td>{{ license.notes|default:"-" }}</td></tr>
+    </table>
+  </section>
+  <section class="panel">
+    <h2>Terms</h2>
+    <table>
+      <thead><tr><th>Term</th><th>Allowed</th><th>Limit</th></tr></thead>
+      <tbody>
+        {% for term in license.license_terms.all %}
+          <tr><td>{{ term.term_type }}</td><td>{{ term.allowed|yesno:"是,否" }}</td><td>{{ term.limit_value|default:"-" }}</td></tr>
+        {% empty %}
+          <tr><td colspan="3">尚無授權條款。</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </section>
+</div>
+<section class="panel">
+  <h2>關聯電子資源</h2>
+  <table>
+    <thead><tr><th>題名</th><th>平台</th><th>狀態</th></tr></thead>
+    <tbody>
+      {% for resource in license.resources.all %}
+        <tr>
+          <td><a href="{% url 'staff:erm_resource_detail' resource.id %}">{{ resource.title }}</a></td>
+          <td>{{ resource.platform_ref.name|default:resource.platform|default:"-" }}</td>
+          <td>{{ resource.status }}</td>
+        </tr>
+      {% empty %}
+        <tr><td colspan="3">尚無關聯電子資源。</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</section>
+{% endblock %}

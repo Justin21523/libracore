@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% block title %}資料品質{% endblock %}
+{% block shell_title %}資料品質{% endblock %}
+{% block content %}
+<section class="panel" data-tour-id="data-quality-header">
+  <div class="panel-header">
+    <div>
+      <p class="eyebrow">Data governance</p>
+      <h1>資料品質</h1>
+      <p>檢查書目、MARC、權威、館藏、ERM、典藏等資料治理問題。</p>
+    </div>
+    <form method="post" action="{% url 'staff:data_quality_run' %}">
+      {% csrf_token %}
+      <button type="submit">執行全量檢查</button>
+    </form>
+  </div>
+</section>
+<div class="grid">
+  <section class="panel" data-tour-id="data-quality-runs">
+    <h2>最近檢查</h2>
+    <div class="table-wrap">
+    <table>
+      <thead><tr><th>時間</th><th>狀態</th><th>問題數</th><th>執行者</th></tr></thead>
+      <tbody>
+        {% for run in runs %}
+          <tr><td>{{ run.started_at }}</td><td>{{ run.status }}</td><td>{{ run.issue_count }}</td><td>{% if run.started_by %}{{ run.started_by.username }}{% else %}-{% endif %}</td></tr>
+        {% empty %}
+          <tr><td colspan="4">尚無檢查紀錄。</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    </div>
+  </section>
+  <section class="panel" data-tour-id="data-quality-summary">
+    <h2>Summary</h2>
+    {% if selected_run %}<pre>{{ selected_run.summary }}</pre>{% else %}<p>尚無資料。</p>{% endif %}
+  </section>
+</div>
+<section class="panel" data-tour-id="data-quality-issues">
+  <h2>Issues</h2>
+  <div class="table-wrap">
+  <table>
+    <thead><tr><th>Code</th><th>Severity</th><th>Entity</th><th>Message</th></tr></thead>
+    <tbody>
+      {% for issue in issues %}
+        <tr><td>{{ issue.code }}</td><td>{{ issue.severity }}</td><td>{{ issue.entity_label }}</td><td>{{ issue.message }}</td></tr>
+      {% empty %}
+        <tr><td colspan="4">無問題。</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  </div>
+</section>
+{% endblock %}

@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block title %}發票{% endblock %}
+{% block content %}
+<h1>發票</h1>
+<table>
+  <thead><tr><th>發票號</th><th>供應商</th><th>金額</th><th>狀態</th><th>操作</th></tr></thead>
+  <tbody>
+  {% for invoice in invoices %}
+    <tr>
+      <td>{{ invoice.invoice_number }}</td><td>{{ invoice.vendor }}</td><td>{{ invoice.total_amount }}</td><td>{{ invoice.match_status }}</td>
+      <td><form method="post" action="{% url 'staff:invoice_match' invoice.id %}">{% csrf_token %}<button type="submit">對帳</button></form></td>
+    </tr>
+  {% empty %}<tr><td colspan="5">尚無發票。</td></tr>{% endfor %}
+  </tbody>
+</table>
+{% endblock %}
+

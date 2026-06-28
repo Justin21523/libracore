@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block title %}採購請購{% endblock %}
+{% block content %}
+<h1>採購請購</h1>
+<table>
+  <thead><tr><th>題名</th><th>狀態</th><th>供應商</th><th>數量</th><th>估價</th></tr></thead>
+  <tbody>
+  {% for request in requests %}
+    <tr><td>{{ request.title }}</td><td>{{ request.status }}</td><td>{{ request.vendor }}</td><td>{{ request.quantity }}</td><td>{{ request.estimated_price }}</td></tr>
+  {% empty %}<tr><td colspan="5">尚無請購。</td></tr>{% endfor %}
+  </tbody>
+</table>
+{% endblock %}
+

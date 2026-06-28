@@ -1,0 +1,34 @@
+<label>題名 <input name="title" required value="{{ object.title|default:'' }}"></label>
+<label>書目紀錄
+  <select name="bibliographic_record_id">
+    <option value="">未連結</option>
+    {% for bib in bib_records %}
+      <option value="{{ bib.id }}" {% if object and object.bibliographic_record_id == bib.id %}selected{% endif %}>
+        {{ bib.control_number }} {% if bib.instance %}{{ bib.instance.title_statement }}{% endif %}
+      </option>
+    {% endfor %}
+  </select>
+</label>
+<label>狀態
+  <select name="status">
+    {% for value, label in statuses %}
+      <option value="{{ value }}" {% if object and object.status == value %}selected{% endif %}>{{ label }}</option>
+    {% endfor %}
+  </select>
+</label>
+<label>OAI identifier <input name="oai_identifier" value="{{ object.oai_identifier|default:'' }}"></label>
+<div class="grid">
+  <label>DC title <input name="dc_title" value="{{ object.dc_metadata.title|default:object.title|default:'' }}"></label>
+  <label>DC creator <textarea name="dc_creator" rows="3">{{ object.dc_metadata.creator|default:'' }}</textarea></label>
+  <label>DC subject <textarea name="dc_subject" rows="3">{{ object.dc_metadata.subject|default:'' }}</textarea></label>
+  <label>DC description <textarea name="dc_description" rows="3">{{ object.dc_metadata.description|default:'' }}</textarea></label>
+  <label>DC publisher <input name="dc_publisher" value="{{ object.dc_metadata.publisher|default:'' }}"></label>
+  <label>DC date <input name="dc_date" value="{{ object.dc_metadata.date|default:'' }}"></label>
+  <label>DC type <input name="dc_type" value="{{ object.dc_metadata.type|default:'' }}"></label>
+  <label>DC format <input name="dc_format" value="{{ object.dc_metadata.format|default:'' }}"></label>
+  <label>DC identifier <input name="dc_identifier" value="{{ object.dc_metadata.identifier|default:'' }}"></label>
+  <label>DC language <input name="dc_language" value="{{ object.dc_metadata.language|default:'' }}"></label>
+  <label>DC relation <input name="dc_relation" value="{{ object.dc_metadata.relation|default:'' }}"></label>
+  <label>DC collection <input name="dc_collection" value="{{ object.dc_metadata.collection|default:'' }}"></label>
+</div>
+<label>Rights statement <textarea name="rights_statement" rows="3">{{ object.rights_statement|default:'' }}</textarea></label>

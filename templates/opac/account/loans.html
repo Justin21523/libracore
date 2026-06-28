@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block title %}我的借閱{% endblock %}
+{% block content %}
+<h1>我的借閱</h1>
+{% if not patron %}
+  <section class="panel"><p>尚未建立讀者檔。</p></section>
+{% else %}
+<table>
+  <thead><tr><th>題名</th><th>條碼</th><th>借出日</th><th>到期日</th><th>狀態</th><th>續借</th></tr></thead>
+  <tbody>
+    {% for loan in loans %}
+      <tr>
+        <td>{{ loan.item.holding.instance.title_statement }}</td>
+        <td>{{ loan.item.barcode }}</td>
+        <td>{{ loan.checked_out_at|date:"Y-m-d" }}</td>
+        <td>{{ loan.due_at|date:"Y-m-d" }}</td>
+        <td><span class="status {{ loan.status }}">{{ loan.status }}</span></td>
+        <td>
+          {% if loan.status == "open" %}
+            <form method="post" action="{% url 'discovery:account_renew_loan' loan.id %}">
+              {% csrf_token %}<button type="submit">續借</button>
+            </form>
+          {% else %}-{% endif %}
+        </td>
+      </tr>
+    {% empty %}
+      <tr><td colspan="6">沒有借閱紀錄。</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% block title %}流通報表{% endblock %}
+{% block content %}
+<h1>流通報表</h1>
+<div class="grid">
+  <section class="panel">
+    <h2>今日借出</h2>
+    <table>
+      <thead><tr><th>讀者</th><th>條碼</th><th>時間</th></tr></thead>
+      <tbody>{% for loan in today_checkouts %}
+        <tr><td>{{ loan.patron.barcode }}</td><td>{{ loan.item.barcode }}</td><td>{{ loan.checked_out_at|date:"H:i" }}</td></tr>
+      {% empty %}<tr><td colspan="3">無資料。</td></tr>{% endfor %}</tbody>
+    </table>
+  </section>
+  <section class="panel">
+    <h2>今日歸還</h2>
+    <table>
+      <thead><tr><th>讀者</th><th>條碼</th><th>時間</th></tr></thead>
+      <tbody>{% for loan in today_returns %}
+        <tr><td>{{ loan.patron.barcode }}</td><td>{{ loan.item.barcode }}</td><td>{{ loan.returned_at|date:"H:i" }}</td></tr>
+      {% empty %}<tr><td colspan="3">無資料。</td></tr>{% endfor %}</tbody>
+    </table>
+  </section>
+</div>
+<section class="panel">
+  <h2>逾期清單</h2>
+  <table>
+    <thead><tr><th>讀者</th><th>題名</th><th>條碼</th><th>到期</th></tr></thead>
+    <tbody>{% for loan in overdue_loans %}
+      <tr><td>{{ loan.patron.barcode }}</td><td>{{ loan.item.holding.instance.title_statement }}</td><td>{{ loan.item.barcode }}</td><td>{{ loan.due_at|date:"Y-m-d" }}</td></tr>
+    {% empty %}<tr><td colspan="4">無逾期。</td></tr>{% endfor %}</tbody>
+  </table>
+</section>
+<section class="panel">
+  <h2>預約待取</h2>
+  <table>
+    <thead><tr><th>讀者</th><th>題名</th><th>取書地</th><th>到期</th></tr></thead>
+    <tbody>{% for hold in ready_holds %}
+      <tr><td>{{ hold.patron.barcode }}</td><td>{% if hold.instance %}{{ hold.instance.title_statement }}{% elif hold.item %}{{ hold.item.holding.instance.title_statement }}{% else %}-{% endif %}</td><td>{{ hold.pickup_location.name }}</td><td>{{ hold.expires_at|date:"Y-m-d" }}</td></tr>
+    {% empty %}<tr><td colspan="4">無待取預約。</td></tr>{% endfor %}</tbody>
+  </table>
+</section>
+<div class="grid">
+  <section class="panel">
+    <h2>高額欠款讀者</h2>
+    <table>
+      <thead><tr><th>讀者</th><th>餘額</th></tr></thead>
+      <tbody>{% for patron in high_balance_patrons %}
+        <tr><td><a href="{% url 'staff:patron_detail' patron.id %}">{{ patron.barcode }}</a></td><td>{{ patron.open_balance }}</td></tr>
+      {% empty %}<tr><td colspan="2">無資料。</td></tr>{% endfor %}</tbody>
+    </table>
+  </section>
+  <section class="panel">
+    <h2>遺失 / Missing Item</h2>
+    <table>
+      <thead><tr><th>條碼</th><th>題名</th><th>狀態</th></tr></thead>
+      <tbody>{% for item in problem_items %}
+        <tr><td>{{ item.barcode }}</td><td>{{ item.holding.instance.title_statement }}</td><td>{{ item.status }}</td></tr>
+      {% empty %}<tr><td colspan="3">無資料。</td></tr>{% endfor %}</tbody>
+    </table>
+  </section>
+</div>
+{% endblock %}

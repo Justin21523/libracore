@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+{% block title %}{{ resource.title }}{% endblock %}
+{% block content %}
+<h1>{{ resource.title }}</h1>
+<p>
+  <span class="status {{ resource.status }}">{{ resource.status }}</span>
+  {{ resource.resource_kind }} / {{ resource.resource_mode }}
+</p>
+<div class="toolbar">
+  <a class="button secondary" href="{% url 'staff:erm_resource_list' %}">返回電子資源</a>
+  {% if resource.license_id %}
+    <a class="button secondary" href="{% url 'staff:erm_license_detail' resource.license_id %}">License</a>
+  {% endif %}
+</div>
+<div class="grid">
+  <section class="panel">
+    <h2>資源資料</h2>
+    <table>
+      <tr><th>平台</th><td>{{ resource.platform_ref.name|default:resource.platform|default:"-" }}</td></tr>
+      <tr><th>套裝</th><td>{{ resource.package.name|default:"-" }}</td></tr>
+      <tr><th>書目 Instance</th><td>{{ resource.instance.title_statement|default:"-" }}</td></tr>
+      <tr><th>Authentication</th><td>{{ resource.authentication_method|default:"-" }}</td></tr>
+      <tr><th>Identifiers</th><td>{{ resource.identifiers }}</td></tr>
+    </table>
+  </section>
+  <section class="panel">
+    <h2>Access URLs</h2>
+    <table>
+      <thead><tr><th>Label</th><th>URL</th><th>Proxy</th></tr></thead>
+      <tbody>
+        {% for link in access_links %}
+          <tr>
+            <td>{{ link.label }}</td>
+            <td><a href="{{ link.url }}">{{ link.url }}</a></td>
+            <td>{{ link.requires_proxy|yesno:"是,否" }}</td>
+          </tr>
+        {% empty %}
+          <tr><td colspan="3">尚無 access URL。</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </section>
+</div>
+<section class="panel">
+  <h2>Coverage</h2>
+  <ul>
+    {% for statement in coverage_statements %}
+      <li>{{ statement }}</li>
+    {% empty %}
+      <li>-</li>
+    {% endfor %}
+  </ul>
+</section>
+{% if resource.license %}
+<section class="panel">
+  <h2>License Terms</h2>
+  <table>
+    <thead><tr><th>Term</th><th>Allowed</th><th>Limit</th><th>Note</th></tr></thead>
+    <tbody>
+      {% for term in resource.license.license_terms.all %}
+        <tr>
+          <td>{{ term.term_type }}</td>
+          <td>{{ term.allowed|yesno:"是,否" }}</td>
+          <td>{{ term.limit_value|default:"-" }}</td>
+          <td>{{ term.note|default:"-" }}</td>
+        </tr>
+      {% empty %}
+        <tr><td colspan="4">尚無授權條款。</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</section>
+{% endif %}
+{% endblock %}
